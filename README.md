@@ -32,3 +32,9 @@ Below I describe briefly describe what each file does, and which of the main fig
 + 30_describe.R: This file generates Figures X, Y and Z
 + 99_figures.R: Creates .tex files for figures, with footnotes
 + 99_tables.R: Creates .tex files for figures, with footnotes
+
+NB: Scripts that are not numbered contain functions or other code that is called by one or more of these scripts.
+
+## Questions and Comments? 
+
+If you encounter any issues with this code or with reproducing my results, please let me know at adaner.usmani[at]gmail.com. 
