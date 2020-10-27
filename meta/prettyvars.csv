@@ -1,0 +1,24 @@
+var,prettyname,order,type
+D.incRate_corrected_estimated_25,Incarceration Rate,1,dv
+D.property_crt,Property Crime Rate (UCR),2,dv
+D.pcrt_fs,Property Crime Rate (FS),3,dv
+D.violent_crt,Violent Crime Rate (UCR),4,dv
+D.vcrt_fs,Violent Crime Rate (FS),5,dv
+D.emptopop,Decline in Emp-to-Pop (CBP),6,endogenous
+D.emptopopc,Decline in Emp-to-Pop (IPUMS),7,endogenous
+D.manushare,Decline in Manufacturing Share,8,endogenous
+D.unemprate,Increase in Unemployment Rate,9,endogenous
+usch,China Shock,10,endogenous
+otch,"China Shock, Instrument",11,shockvar
+d_tradeusch_pw,China Shock (FS),12,endogenous
+blackpop_pct,Black Population (\%),13,speriod
+l_sh_popedu_c,College-Educated Pop. (\%),14,speriod
+l_sh_popfborn,Foreign-Born Pop. (\%),15,speriod
+incRate_corrected_estimated_25,Incarceration Rate,16,speriod
+emptopop,Emp-to-Pop Ratio (CBP),17,speriod
+emptopopc,Emp-to-Pop Ratio (IPUMS),18,speriod
+manushare,Manufacturing Employment (\%) ,19,speriod
+unemprate,Unemployment Rate (\%),20,speriod
+l_sh_empl_f,Female Emp. Share (\%),21,speriod
+l_task_outsource,Offshorability Index,22,speriod
+l_sh_routine33,Routine Occupations (\%),23,speriod

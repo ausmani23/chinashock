@@ -1,0 +1,14 @@
+dv,prettyname,order
+D.violent_crt,Violent Crime Rate,1
+D.property_crt,Property Crime Rate,2
+D.vcrt_fs,Violent Crime Rate (FS),3
+D.pcrt_fs,Property Crime Rate (FS),4
+D.incrate_infl,Prisons Adj.,5
+D.incrate,Prisons,6
+D.admitRate,Jail Admissions,7
+D.localJailRate,Jails,8
+D.pretrialRate,Pre-Trial,9
+D.prisjail,Prisons + Jails,10
+D.prisjail_infl,Prisons + Jails Adj.,11
+D.emptopop,Emp-to-Pop,12
+D.manushare,Manufacturing Share,13

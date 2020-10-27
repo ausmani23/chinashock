@@ -1,0 +1,26 @@
+mname,propername,order,group,maindisplay
+preferred,preferred,1,NA,F
+D.incRate,Inc. Rate,2,altdv,T
+D.jailRate,Jail Rate,3,altdv,T
+D.violent_crt,Violent Crime,4,altdv,T
+D.property_crt,Property Crime,5,altdv,T
+D.vcrt_fs,"Violent Crime, FS",6,altdv,T
+D.pcrt_fs,"Property Crime, FS",7,altdv,T
+D.incrate_infl,"Inc. Rate, NCRP",8,altdv,T
+D.prisjail_infl,"Imp. Rate, NCRP",9,altdv,T
+notlog,Raw Change,10,altdv,T
+stacked,1990-2007,11,period,T
+first,1990-1999,12,period,T
+second.alt,1999-2011,13,period,T
+second,1999-2007,14,period,T
+long.alt,1990-2011,15,period,T
+long,1990-2007,16,period,T
+chinarobots,"China Shock, FS",17,endogenous,T
+robots,Robotization Shock,18,endogenous,T
+simple,Bivariate,19,specification,T
+fe,Period FE,20,specification,T
+statefe,State FE,21,specification,T
+pref_statefe,"Pref, State FE",22,specification,T
+pref_czfe,"Pref, CZ FE",23,specification,T
+consistentczs,Consistent CZ,24,misc,T
+unweighted,No Weights,25,misc,T

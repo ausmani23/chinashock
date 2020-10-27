@@ -1,0 +1,24 @@
+dv,logdv,period,model,restriction,instrumented,latestart,weights,decadal_dv,decadal_shock,dropoutliers,dropsmallczs,prefmods,propername,group,order
+D.incRate_corrected_estimated_25,TRUE,stacked.alt,simple,unrestricted,instrumented,samestart,yes,yes,yes,no,no,FALSE,Bivariate,Model,1
+D.incRate_corrected_estimated_25,TRUE,stacked.alt,divisionfe,unrestricted,instrumented,samestart,yes,yes,yes,no,no,FALSE,Reg. FE,Model,2
+D.incRate_corrected_estimated_25,TRUE,stacked.alt,periodfe,unrestricted,instrumented,samestart,yes,yes,yes,no,no,FALSE,Time FE,Model,3
+D.incRate_corrected_estimated_25,TRUE,stacked.alt,dpfe,unrestricted,instrumented,samestart,yes,yes,yes,no,no,FALSE,Time and Reg. FE,Model,4
+D.incRate_corrected_estimated_25,TRUE,stacked.alt,statefe,unrestricted,instrumented,samestart,yes,yes,yes,no,no,FALSE,"Controls, State FE",Model,6
+D.incRate_corrected_estimated_25,TRUE,stacked.alt,czfe,unrestricted,instrumented,samestart,yes,yes,yes,no,no,FALSE,"Controls, CZ FE",Model,7
+D.incRate_corrected_estimated_25,FALSE,stacked.alt,preferred,unrestricted,instrumented,samestart,yes,yes,yes,no,no,FALSE,Raw,Model,8
+D.incRate_corrected_estimated_25,TRUE,stacked.alt,preferred,unrestricted,instrumented,samestart,yes,yes,no,no,no,FALSE,Unadjusted Shock,Model,9
+D.incRate_corrected_estimated_25,TRUE,stacked.alt,preferred,unrestricted,instrumented,samestart,yes,no,yes,no,no,FALSE,Unadjusted DV,Model,10
+D.incRate_corrected_estimated_25,TRUE,stacked.alt,preferred,unrestricted,instrumented,samestart,no,yes,yes,no,no,FALSE,Unweighted,Model,11
+D.incRate_corrected_estimated_25,TRUE,stacked.alt,preferred,unrestricted,instrumented,samestart,yes,yes,yes,no,<10k,FALSE,Dropped <10k CZs,Sample,12
+D.incRate_corrected_estimated_25,TRUE,stacked.alt,preferred,unrestricted,instrumented,samestart,yes,yes,yes,no,<100k,FALSE,Dropped <100k CZs,Sample,13
+D.incRate_corrected_estimated_25,TRUE,stacked.alt,preferred,unrestricted,instrumented,samestart,yes,yes,yes,yes,no,FALSE,Dropped Outliers,Sample,14
+D.incRate_corrected_estimated_25,TRUE,stacked.alt,preferred,unrestricted,instrumented,samestart,yes,yes,yes,winsorize1,no,FALSE,Winsorized I,Sample,15
+D.incRate_corrected_estimated_25,TRUE,stacked.alt,preferred,unrestricted,instrumented,samestart,yes,yes,yes,winsorize2,no,FALSE,Winsorized II,Sample,16
+D.incRate_corrected_estimated_25,TRUE,stacked.alt,preferred,consistent,instrumented,samestart,yes,yes,yes,no,no,FALSE,Consistent CZs,Sample,17
+D.incRate_corrected_estimated_25,TRUE,stacked.alt,preferred,unrestricted,instrumented,latestart,yes,yes,yes,no,no,FALSE,1994-,Period,18
+D.incRate_corrected_estimated_25,TRUE,first,preferred,unrestricted,instrumented,samestart,yes,yes,yes,no,no,FALSE,1991-1999,Period,19
+D.incRate_corrected_estimated_25,TRUE,second,preferred,unrestricted,instrumented,samestart,yes,yes,yes,no,no,FALSE,1999-2007,Period,20
+D.incRate_corrected_estimated_25,TRUE,second.alt,preferred,unrestricted,instrumented,samestart,yes,yes,yes,no,no,FALSE,1999-2011,Period,21
+D.incRate_corrected_estimated_25,TRUE,stacked,preferred,unrestricted,instrumented,samestart,yes,yes,yes,no,no,FALSE,1991-2007 (Stacked),Period,22
+D.incRate_corrected_estimated_25,TRUE,long,preferred,unrestricted,instrumented,samestart,yes,yes,yes,no,no,FALSE,1991-2011,Period,23
+D.incRate_corrected_estimated_25,TRUE,long.alt,preferred,unrestricted,instrumented,samestart,yes,yes,yes,no,no,FALSE,1991-2007,Period,24

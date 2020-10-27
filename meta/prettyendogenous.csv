@@ -1,0 +1,10 @@
+endogenous,prettyname,order,,,,,,,,,
+manuf,Manuf. Share,1,,,,,,,,,ss
+manuf_china,Manuf. Share (China),2,,,,,,,,,
+manuf_robot,Manuf. Share (Robots),3,,,,,,,,,
+emptopop,Emp. to Pop.,4,,,,,,,,,
+emptopop_china,Emp. to Pop. (China),5,,,,,,,,,
+emptopop_robot,Emp. to Pop. (Robots),6,,,,,,,,,
+china,China Shock,7,,,,,,,,,
+china_alt,China Shock (Alt.),8,,,,,,,,,
+robots,Robot Shock,9,,,,,,,,,
