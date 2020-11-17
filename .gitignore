@@ -12,7 +12,7 @@ data/
 paper/
 
 #select code
-code/00*
+code/00_runall.R
 code/01*
 
 #and randoms
