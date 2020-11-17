@@ -285,7 +285,7 @@ for(j in tmpseq.j) {
     "Method",
     "Commuting Zones",
     "Observations",
-    "Division-Level",
+    "Period-Level",
     "State-Level",
     "First-Stage F-Statistic"
   )

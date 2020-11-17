@@ -384,105 +384,187 @@ sumratedf<-merge(
 #########################################################
 
 #GET STATS
-#how much of the increase is explained away in the 
-#cfactuals 
 
-#i.e., how much more or how much less does incRate increase,
-#under the counterfactuals as compared to observed/predicted?
+#since we extend 90s boom into 2000s,
+#natural question is: 
+#how much did incarceration increase? 
+#how much would it have increased? 
 
-#one small issue
-#we only have observed for rep 1
-#to fix this, I extract observed
-#and merge it back in w/ reps ignored
-tmp<-rawratedf$cfactual=="observed"
-obsdf<-rawratedf[tmp,]
-obsdf$seq.j<-obsdf$rep<-obsdf$cfactual<-NULL
-names(obsdf)[names(obsdf)=="pred_plot"]<-"observed"
-
-statsdf<-rawratedf[!tmp,]
-statsdf$seq.j<-NULL
-statsdf<-data.table(statsdf)
-
-#make a note of cfactuals
-base.cfactuals<-c("predicted","observed")
-tmp<-statsdf$cfactual%in%base.cfactuals
-oth.cfactuals<-unique(statsdf$cfactual[!tmp])
-
-#spread
-statsdf<-spread(
-  statsdf,
-  cfactual,
-  pred_plot
-)
-
-#bring back in observed
-statsdf<-merge(
-  statsdf,
-  obsdf
-)
-
-#gather
-statsdf<-gather_(
-  statsdf,
-  "cfactual",
-  "rate_hat",
-  oth.cfactuals
-)
-statsdf<-data.table(statsdf)
-
-#loop through and calculate stats
-
-#this function calcs cfactual chg
-#as pct of base chg, 
-#and subtracts from 100 to get
-#'pctexplained'
-tmpf<-function(cfactualchg,basechg) {
-  100 * (1 - cfactualchg/basechg)
+tmpf<-function(base,end) {
+  100 * (end-base)/base
 }
 
-tmpdf<-statsdf[
-  cz90=="average" 
-  ,
+statsdf<-rawratedf[
+  cz90=="average" &
+    cfactual%in%c(
+      '90spreserved',
+      'predicted',
+      'observed'
+    )
+  , 
   list(
-    pctexplained = 
-      tmpf(
-        rate_hat[year==2011] - predicted[year==1991],
-        predicted[year==2011] - predicted[year==1991]
-      ),
-    pctexplained_observed = 
-      tmpf(
-        rate_hat[year==2011] - observed[year==1991],
-        observed[year==2011] - observed[year==1991]
-      )
+    pctchange=tmpf(pred_plot[year==1999],pred_plot[year==2011])
   )
   ,
   by=c(
-    "cz90",
-    "cfactual",
-    "endogenous",
-    "rep"
+    'cz90',
+    'cfactual',
+    'endogenous',
+    'rep'
   )
-  ]
-tmpdf<-gather(
-  tmpdf,
-  var,
-  val,
-  pctexplained_observed:pctexplained
-)
+]
 
-tmpdf<-data.table(tmpdf)
-sumstatsdf<-tmpdf[
-  cz90=="average"
+sumstatsdf<-statsdf[
   ,
-  summarize.distribution2(val)
+  summarize.distribution2(pctchange)
   ,
   by=c(
     "cz90",
-    "cfactual",
-    "endogenous",
-    "var"
+    'cfactual',
+    "endogenous"
   )
   ]
+
+#########################################################
+#########################################################
+
+#DEPRECATED; THIS WAS THE PREVIOUS CFACTULA EXERCISE
+#NO NEED TO GET THIS COMPLICATED, SO WE SIMLPIFIED AS ABOVE
+
+#' #GET STATS 
+#' 
+#' #one small issue
+#' #we only have observed for rep 1
+#' #to fix this, I extract observed
+#' #and merge it back in w/ reps ignored
+#' tmp<-rawratedf$cfactual=="observed"
+#' obsdf<-rawratedf[tmp,]
+#' obsdf$seq.j<-obsdf$rep<-obsdf$cfactual<-NULL
+#' names(obsdf)[names(obsdf)=="pred_plot"]<-"observed"
+#' 
+#' statsdf<-rawratedf[!tmp,]
+#' statsdf$seq.j<-NULL
+#' statsdf<-data.table(statsdf)
+#' 
+#' #make a note of cfactuals
+#' base.cfactuals<-c("predicted","observed")
+#' tmp<-statsdf$cfactual%in%base.cfactuals
+#' oth.cfactuals<-unique(statsdf$cfactual[!tmp])
+#' 
+#' #spread
+#' statsdf<-spread(
+#'   statsdf,
+#'   cfactual,
+#'   pred_plot
+#' )
+#' 
+#' #bring back in observed
+#' statsdf<-merge(
+#'   statsdf,
+#'   obsdf
+#' )
+#' 
+#' #gather
+#' statsdf<-gather_(
+#'   statsdf,
+#'   "cfactual",
+#'   "rate_hat",
+#'   oth.cfactuals
+#' )
+#' statsdf<-data.table(statsdf)
+#' 
+#' #########################################################
+#' #########################################################
+#' 
+#' #CALCULATE STATS
+#' 
+#' #since we extend 90s boom into 2000s,
+#' #natural question is: 
+#' #how much did incarceration increase? 
+#' #how much would it have increased? 
+#' 
+#' tmpf<-function(base,end) {
+#'   100 * (end-base)/base
+#' }
+#' 
+#' tmpdf<-statsdf[
+#'   cz90=="average" 
+#'   ,
+#'   list(
+#'     pctexplained = 
+#'       tmpf(
+#'         rate_hat[year==2011],
+#'         predicted[year==2011] - predicted[year==1991]
+#'       ),
+#'     pctexplained_observed = 
+#'       tmpf(
+#'         rate_hat[year==2011] - observed[year==1991],
+#'         observed[year==2011] - observed[year==1991]
+#'       )
+#'   )
+#'   ,
+#'   by=c(
+#'     "cz90",
+#'     "cfactual",
+#'     "endogenous",
+#'     "rep"
+#'   )
+#'   ]
+#' 
+#' 
+#' 
+#' 
+#' #this function calcs cfactual chg
+#' #as pct of base chg, 
+#' #and subtracts from 100 to get
+#' #'pctexplained'
+#' tmpf<-function(cfactualchg,basechg) {
+#'   100 * (1 - cfactualchg/basechg)
+#' }
+#' 
+#' tmpdf<-statsdf[
+#'   cz90=="average" 
+#'   ,
+#'   list(
+#'     pctexplained = 
+#'       tmpf(
+#'         rate_hat[year==2011] - predicted[year==1991],
+#'         predicted[year==2011] - predicted[year==1991]
+#'       ),
+#'     pctexplained_observed = 
+#'       tmpf(
+#'         rate_hat[year==2011] - observed[year==1991],
+#'         observed[year==2011] - observed[year==1991]
+#'       )
+#'   )
+#'   ,
+#'   by=c(
+#'     "cz90",
+#'     "cfactual",
+#'     "endogenous",
+#'     "rep"
+#'   )
+#'   ]
+#' tmpdf<-gather(
+#'   tmpdf,
+#'   var,
+#'   val,
+#'   pctexplained_observed:pctexplained
+#' )
+#' 
+#' tmpdf<-data.table(tmpdf)
+#' sumstatsdf<-tmpdf[
+#'   cz90=="average"
+#'   ,
+#'   summarize.distribution2(val)
+#'   ,
+#'   by=c(
+#'     "cz90",
+#'     "cfactual",
+#'     "endogenous",
+#'     "var"
+#'   )
+#'   ]
 
 #########################################################
 #########################################################

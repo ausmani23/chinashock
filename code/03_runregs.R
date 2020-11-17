@@ -445,7 +445,7 @@ tmpseq.i<-1:nrow(runmodsdf)
 fulloutput<-lapply(tmpseq.i,function(i) {
   
   #i<-which(runmodsdf$dropoutliers=="winsorize")
-  #i<-263
+  #i<-2
   
   print(
     paste(
@@ -956,13 +956,10 @@ fulloutput<-lapply(tmpseq.i,function(i) {
     diagdf<-data.frame(
       test=NA
     )
+    
   } else {
     
     #get first-stage diagnostics
-    #i try robust SE's, but if can't
-    #then I just run w/ standard vcov
-    #seems to be collinearity induced by robustness
-    
     tmpsum <- try(
       summary(
         m.tmp,
@@ -971,6 +968,7 @@ fulloutput<-lapply(tmpseq.i,function(i) {
       ),
       silent=T
     )
+    
     if( class(tmpsum)=="try-error") {
       
       #if can't do w/ robust vcov

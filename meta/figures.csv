@@ -1,12 +1,13 @@
 imagefile,label,caption,loc,order,width
 fig_inclm_corrs.pdf,fig_inclm_corrs,Correlations Between Labor Market Indicators and the Incarceration Rate,main,1,5in
-fig_path.pdf,fig_path,Causal Pathways Connecting Job Loss to Incarceration,main,2,5in
-fig_incrates.pdf,fig_incrates,"Incarceration Rate per 100,000 Adults",main,3,5in
+fig_path.pdf,fig_path,Causal Pathways Connecting Job Loss to Incarceration,main,2,6in
+fig_incrates.pdf,fig_incrates,"Incarceration Rate per 100,000 Adults",main,3,6in
 fig_sample.pdf,fig_sample,Commuting Zones in Regression Sample,main,4,6in
-fig_ols2sls.pdf,fig_ols2sls,OLS vs. 2SLS Estimates,main,5,5in
-fig_robustness.pdf,fig_robustness,Robustness Tests,main,6,5in
-fig_otherdvs.pdf,fig_otherdvs,Other Dependent Variables,main,7,5in
-fig_datachoices.pdf,fig_datachoices,Robustness of Main Estimate to Different Data Choices,main,8,5in
-fig_densities.pdf,fig_densities,Density Plots of Labor Market Deterioration,main,9,5in
-fig_cfactuals_rates.pdf,fig_cfactuals_rates,"National Incarceration Rate, Different Counterfactuals",main,10,5in
-fig_exceptionalism.pdf,fig_exceptionalism,American Penality in Comparative Perspective,main,11,5in
+fig_ols2sls.pdf,fig_ols2sls,OLS vs. 2SLS Estimates,main,5,6in
+fig_rffs.pdf,fig_rffs,"Reduced Form, First Stage and Second Stage Estimates",main,6,6in
+fig_robustness.pdf,fig_robustness,Robustness Tests,main,7,6in
+fig_otherdvs.pdf,fig_otherdvs,Other Dependent Variables,main,8,6in
+fig_datachoices.pdf,fig_datachoices,Robustness of Main Estimate to Different Data Choices,main,9,6in
+fig_densities.pdf,fig_densities,Density Plots of Labor Market Deterioration,main,10,6in
+fig_cfactuals_rates.pdf,fig_cfactuals_rates,"National Incarceration Rate, Different Counterfactuals",main,11,6in
+fig_exceptionalism.pdf,fig_exceptionalism,American Penality in Comparative Perspective,main,12,6in

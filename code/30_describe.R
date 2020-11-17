@@ -362,15 +362,14 @@ write.csv(
   row.names=F
 )
 
-
 #names
 tmplevels<-c(
   "first",
   "second.alt"
 )
 tmplabels<-c(
-  "1",
-  "2"
+  "1991-1999",
+  "1999-2011"
 )
 plotdf$periodf<-factor(
   plotdf$periodf,
@@ -402,7 +401,7 @@ table(plotdf$insample)
 
 #colors
 brewer.pal.info
-tmpcolors<-brewer.pal(3,'Greys')[c(1,3)]
+tmpcolors<-c('white','darkgreen')
 names(tmpcolors)<-levels(plotdf$insample)
 
 g.tmp<-ggplot(
@@ -413,7 +412,9 @@ g.tmp<-ggplot(
     fill=insample
   )
 ) +
-  geom_tile() +
+  geom_tile(
+    color='black'
+  ) +
   scale_fill_manual(
     name="",
     values=tmpcolors
@@ -429,7 +430,12 @@ g.tmp<-ggplot(
   theme(
     axis.title.y=element_blank(),
     axis.text.y=element_text(size=6),
-    axis.ticks.y=element_blank()
+    axis.ticks.y=element_blank(),
+    axis.text.x=element_text(size=10)
+  ) +
+  theme(
+    legend.position='bottom',
+    legend.direction='horizontal'
   )
 
 tmpname<-"fig_sample.pdf"
@@ -568,19 +574,42 @@ tmpdf<-read.csv(
   'imprates_historic.csv',
   stringsAsFactors=F
 )
-head(tmpdf)
 keyvars<-c(
   "year",
   "state",
   "jail",
   "uspop"
 )
+tmpdf<-tmpdf[,keyvars]
+
+#quick calc of amount of increase in our sample
+qdf<-tmpdf
+qdf$state<-as.numeric(qdf$state)
+qdf$jail<-as.numeric(qdf$jail)
+qdf$uspop<-as.numeric(qdf$uspop)
+qdf$incrate<-10^5 * 
+  (qdf$state + qdf$jail)/qdf$uspop
+tmin<-1973
+t0<-1991
+tmax<-2007
+totinc<-qdf$incrate[qdf$year==tmax] - 
+  qdf$incrate[qdf$year==tmin]
+sampinc<-qdf$incrate[qdf$year==tmax] - 
+  qdf$incrate[qdf$year==t0]
+#total amount that we don't see
+100 - (100 * sampinc/totinc)
+#total that we do
+100 * sampinc/totinc
+
 these.years<-c(
   plotdfs$raw$year,
   plotdfs$reg$year
 ) %>% unique
 tmprows<-tmpdf$year%in%these.years
-tmpdf<-tmpdf[tmprows,keyvars]
+tmpdf<-tmpdf[tmprows,]
+
+
+
 
 #we need population 15to65 in US at large
 #get this from the CZ-level data from vera
@@ -787,7 +816,7 @@ tmplevels<-c(
 )
 tmplabels<-c(
   "Incarceration Rate",
-  "Lab. Mkt. Indicator"
+  "Labor Market Indicator"
 )
 plotdf$var2<-factor(
   plotdf$var2,

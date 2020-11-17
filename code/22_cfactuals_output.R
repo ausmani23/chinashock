@@ -93,7 +93,7 @@ output <- function(df,tmpname,fig=NULL) {
 
 tmp<-sumratedf$cz90=="average" & 
   sumratedf$cfactual%in%c(
-    #"observed",
+    "observed",
     "predicted",
     #"stable",
     #"nodecline",
@@ -120,7 +120,7 @@ tmplevels<-c(
 )
 tmplabels<-c(
   "Observed",
-  "As Observed",
+  "Predicted",
   "Stable",
   "No Decline",
   "As if 80th",
@@ -133,8 +133,12 @@ plotdf$cfactual<-factor(
   tmplevels,
   tmplabels
 )
-tmplabels<-c(
-  ""
+
+tmptypes<-c(1,2,3)
+names(tmptypes)<-c(
+  "90s Gains Preserved",
+  "Predicted",
+  "Observed"
 )
 
 tmplevels<-c(
@@ -171,8 +175,9 @@ g.tmp<-ggplot(
     ~ endogenous,
     ncol=1
   ) +
-  scale_linetype_discrete(
-    name=""
+  scale_linetype_manual(
+    name="",
+    values=tmptypes
   ) +
   xlab("") +
   ylab("Incarceration Rate \n") +
@@ -211,133 +216,133 @@ plotdf[
 
 #PLOT CHG ACROSS SCENARIOS
 
-#i want 'increase averted' and not amount explained.. 
-tmp<-sumstatsdf$cz90=="average" & 
-  sumstatsdf$var=="pctexplained" &
-  sumstatsdf$cfactual%in%c(
-    #"stable",
-    #"nodecline",
-    #"lowptile",
-    #"90sboom",
-    "90spreserved"
-    #"highptile"
-  ) &
-  sumstatsdf$endogenous=="emptopop_china"
-plotdf<-sumstatsdf[tmp,]
-
-
-tmplevels<-c(
-  "observed",
-  "predicted",
-  "stable",
-  "nodecline",
-  "highptile",
-  "lowptile",
-  "90sboom",
-  "90spreserved"
-)
-tmplabels<-c(
-  "Observed",
-  "As Observed",
-  "Stable",
-  "No Decline",
-  "As if 80th",
-  "As if 20th",
-  "As if 1990s",
-  "90s Gains Preserved"
-)
-plotdf$cfactual<-factor(
-  plotdf$cfactual,
-  tmplevels,
-  tmplabels
-)
-
-tmplevels<-c(
-  "unemp_china",
-  "manuf_china",
-  "emptopop_china",
-  "emptopopc_china"
-) %>% rev
-tmplabels<-c(
-  "+ Unemployment Rate",
-  "- Manufacturing Share",
-  "- Emp-to-Pop Ratio (CBP)",
-  "- Emp-to-Pop Ratio (IPUMS)"
-) %>% rev
-plotdf$endogenous<-factor(
-  plotdf$endogenous,
-  tmplevels,
-  tmplabels
-)
-
-
-#add shape et al to plotdf
-#add pval info to shape of point
-plotdf$pval.shp<-NA
-plotdf$pval.shp[plotdf$pval.class=="at alpha=0.01"]<-1
-plotdf$pval.shp[plotdf$pval.class=="at alpha=0.05"]<-2
-plotdf$pval.shp[plotdf$pval.class=="at alpha=0.10"]<-3
-plotdf$pval.shp[plotdf$pval.class=="not sig"]<-4
-plotdf$pval.shp<-factor(
-  plotdf$pval.shp,
-  levels=c(1,2,3,4),
-  labels=c(
-    "at alpha=0.01",
-    "at alpha=0.05",
-    "at alpha=0.10",
-    "not sig"
-  )
-)
-#tmpshapes
-tmpshapes<-c(8,4,16,1)
-names(tmpshapes)<-levels(plotdf$pval.shp)
-shp.labels<-c(
-  bquote(alpha == 0.01),
-  bquote(alpha == 0.05),
-  bquote(alpha == 0.10)
-)
-
-g.tmp<-ggplot(
-  plotdf,
-  aes(
-    x=cfactual,
-    y=mu,
-    ymin=mu.min,
-    ymax=mu.max,
-    shape=pval.shp
-  )
-) + 
-  geom_point() +
-  geom_errorbar(
-    width=0.2
-  ) +
-  geom_hline(
-    yintercept=0,
-    linetype='dashed'
-  ) +
-  scale_shape_manual(
-    name="",
-    values=tmpshapes,
-    labels=shp.labels,
-    drop=F
-  ) + 
-  facet_wrap(
-    ~ endogenous,
-    ncol=1
-  ) +
-  coord_flip() +
-  xlab("") + 
-  ylab("\n% of Increase Explained") +
-  theme_bw()
-
-tmpname<-"fig_cfactuals_stats.pdf"
-gs.list[[tmpname]]<-list(
-  graph=g.tmp,
-  filename=tmpname,
-  width=6/1.1,
-  height=8/1.1
-)
-output(plotdf,tmpname,g.tmp)
+# #i want 'increase averted' and not amount explained.. 
+# tmp<-sumstatsdf$cz90=="average" & 
+#   sumstatsdf$var=="pctexplained" &
+#   sumstatsdf$cfactual%in%c(
+#     #"stable",
+#     #"nodecline",
+#     #"lowptile",
+#     #"90sboom",
+#     "90spreserved"
+#     #"highptile"
+#   ) &
+#   sumstatsdf$endogenous=="emptopop_china"
+# plotdf<-sumstatsdf[tmp,]
+# 
+# 
+# tmplevels<-c(
+#   "observed",
+#   "predicted",
+#   "stable",
+#   "nodecline",
+#   "highptile",
+#   "lowptile",
+#   "90sboom",
+#   "90spreserved"
+# )
+# tmplabels<-c(
+#   "Observed",
+#   "As Observed",
+#   "Stable",
+#   "No Decline",
+#   "As if 80th",
+#   "As if 20th",
+#   "As if 1990s",
+#   "90s Gains Preserved"
+# )
+# plotdf$cfactual<-factor(
+#   plotdf$cfactual,
+#   tmplevels,
+#   tmplabels
+# )
+# 
+# tmplevels<-c(
+#   "unemp_china",
+#   "manuf_china",
+#   "emptopop_china",
+#   "emptopopc_china"
+# ) %>% rev
+# tmplabels<-c(
+#   "+ Unemployment Rate",
+#   "- Manufacturing Share",
+#   "- Emp-to-Pop Ratio (CBP)",
+#   "- Emp-to-Pop Ratio (IPUMS)"
+# ) %>% rev
+# plotdf$endogenous<-factor(
+#   plotdf$endogenous,
+#   tmplevels,
+#   tmplabels
+# )
+# 
+# 
+# #add shape et al to plotdf
+# #add pval info to shape of point
+# plotdf$pval.shp<-NA
+# plotdf$pval.shp[plotdf$pval.class=="at alpha=0.01"]<-1
+# plotdf$pval.shp[plotdf$pval.class=="at alpha=0.05"]<-2
+# plotdf$pval.shp[plotdf$pval.class=="at alpha=0.10"]<-3
+# plotdf$pval.shp[plotdf$pval.class=="not sig"]<-4
+# plotdf$pval.shp<-factor(
+#   plotdf$pval.shp,
+#   levels=c(1,2,3,4),
+#   labels=c(
+#     "at alpha=0.01",
+#     "at alpha=0.05",
+#     "at alpha=0.10",
+#     "not sig"
+#   )
+# )
+# #tmpshapes
+# tmpshapes<-c(8,4,16,1)
+# names(tmpshapes)<-levels(plotdf$pval.shp)
+# shp.labels<-c(
+#   bquote(alpha == 0.01),
+#   bquote(alpha == 0.05),
+#   bquote(alpha == 0.10)
+# )
+# 
+# g.tmp<-ggplot(
+#   plotdf,
+#   aes(
+#     x=cfactual,
+#     y=mu,
+#     ymin=mu.min,
+#     ymax=mu.max,
+#     shape=pval.shp
+#   )
+# ) + 
+#   geom_point() +
+#   geom_errorbar(
+#     width=0.2
+#   ) +
+#   geom_hline(
+#     yintercept=0,
+#     linetype='dashed'
+#   ) +
+#   scale_shape_manual(
+#     name="",
+#     values=tmpshapes,
+#     labels=shp.labels,
+#     drop=F
+#   ) + 
+#   facet_wrap(
+#     ~ endogenous,
+#     ncol=1
+#   ) +
+#   coord_flip() +
+#   xlab("") + 
+#   ylab("\n% of Increase Explained") +
+#   theme_bw()
+# 
+# tmpname<-"fig_cfactuals_stats.pdf"
+# gs.list[[tmpname]]<-list(
+#   graph=g.tmp,
+#   filename=tmpname,
+#   width=6/1.1,
+#   height=8/1.1
+# )
+# output(plotdf,tmpname,g.tmp)
 
 
 #########################################################
