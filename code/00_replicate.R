@@ -100,9 +100,14 @@ myests[tmp,1]==myests2[tmp,1]
 keyest<-myests[tmp,1]
 
 #semi-standardized ( as in fig_ols2sls)
-( keyest * sd(repdf$D.emptopop) ) #0.22
+100 * ( keyest * sd(repdf$D.emptopop) ) #21.6
+#incRate is in 0-1 units, so multiply by 100 to get %
+
+#as an elasticity
+100 * keyest
 
 #standardized (as in fig_rffs)
 ( keyest * sd(repdf$D.emptopop) ) / 
   sd(repdf$D.incRate_corrected_estimated_25_ln) #0.62
+
 

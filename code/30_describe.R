@@ -608,9 +608,6 @@ these.years<-c(
 tmprows<-tmpdf$year%in%these.years
 tmpdf<-tmpdf[tmprows,]
 
-
-
-
 #we need population 15to65 in US at large
 #get this from the CZ-level data from vera
 head(veradf)
@@ -892,7 +889,14 @@ tmpdfs<-lapply(tmpseq.i,function(i) {
     "periodf",
     thisvar
   )
-  tmpdf[,tmpvars]
+  tmpdf<-tmpdf[,tmpvars]
+  #if this is manushare or emptopop, 
+  #it will be more intuitive for someone
+  #to read these as chg. in the endogenous variable
+  #rather than as -/+
+  if(thisvar!='D.unemprate')
+    tmpdf[[thisvar]]<- -1 * tmpdf[[thisvar]]
+  tmpdf
 })
 
 plotdf<-Reduce(
@@ -930,10 +934,10 @@ tmplevels<-c(
   "D.emptopop"
 ) %>% rev
 tmplabels<-c(
-  "+ Unemployment Rate",
-  "- Manufacturing Share",
-  "- Emp-to-Pop Ratio (IPUMS)",
-  "- Emp-to-Pop Ratio (CBP)"
+  "Chg. in Unemployment Rate",
+  "Chg. in Manufacturing Share",
+  "Chg. in Emp-to-Pop Ratio (IPUMS)",
+  "Chg. in Emp-to-Pop Ratio (CBP)"
 ) %>% rev
 plotdf$var<-factor(
   plotdf$var,
