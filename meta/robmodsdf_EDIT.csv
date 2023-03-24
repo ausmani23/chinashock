@@ -7,8 +7,7 @@
 "D.incRate_corrected_estimated_25",TRUE,"second.alt","preferred","unrestricted","instrumented","samestart","yes","yes","yes","no","no",FALSE
 "D.incRate_corrected_estimated_25",TRUE,"stacked","preferred","unrestricted","instrumented","samestart","yes","yes","yes","no","no",FALSE
 "D.incRate_corrected_estimated_25",TRUE,"stacked.alt","czfe","unrestricted","instrumented","samestart","yes","yes","yes","no","no",FALSE
-"D.incRate_corrected_estimated_25",TRUE,"stacked.alt","divisionfe","unrestricted","instrumented","samestart","yes","yes","yes","no","no",FALSE
-"D.incRate_corrected_estimated_25",TRUE,"stacked.alt","dpfe","unrestricted","instrumented","samestart","yes","yes","yes","no","no",FALSE
+"D.incRate_corrected_estimated_25",TRUE,"stacked.alt","extracontrols","unrestricted","instrumented","samestart","yes","yes","yes","no","no",FALSE
 "D.incRate_corrected_estimated_25",TRUE,"stacked.alt","periodfe","unrestricted","instrumented","samestart","yes","yes","yes","no","no",FALSE
 "D.incRate_corrected_estimated_25",TRUE,"stacked.alt","preferred","consistent","instrumented","samestart","yes","yes","yes","no","no",FALSE
 "D.incRate_corrected_estimated_25",TRUE,"stacked.alt","preferred","unrestricted","instrumented","latestart","yes","yes","yes","no","no",FALSE
@@ -21,3 +20,5 @@
 "D.incRate_corrected_estimated_25",TRUE,"stacked.alt","preferred","unrestricted","instrumented","samestart","yes","yes","yes","winsorize2","no",FALSE
 "D.incRate_corrected_estimated_25",TRUE,"stacked.alt","preferred","unrestricted","instrumented","samestart","yes","yes","yes","yes","no",FALSE
 "D.incRate_corrected_estimated_25",TRUE,"stacked.alt","simple","unrestricted","instrumented","samestart","yes","yes","yes","no","no",FALSE
+"D.incRate_corrected_estimated_25",TRUE,"stacked.alt","spfe","unrestricted","instrumented","samestart","yes","yes","yes","no","no",FALSE
+"D.incRate_corrected_estimated_25",TRUE,"stacked.alt","statefe","unrestricted","instrumented","samestart","yes","yes","yes","no","no",FALSE

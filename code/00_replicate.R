@@ -34,18 +34,22 @@ require(ivpack)
 m.tmp <- ivreg(
   data=repdf,
   form=
+    #### second stage
     D.incRate_corrected_estimated_25_ln ~ 
     factor(state_fips) + #state FE
     factor(periodf) + #period FE
     blackpop_pct + #blackpop_t0
     l_sh_popfborn + #foreignborn_t0
+    genx_noncoll + #genx non-college
     incRate_corrected_estimated_25_ln + #incrate_t0
-    D.emptopop | #emptopop
+    D.emptopopc | #emptopop
+    ######## first stage
     factor(state_fips) + 
     factor(periodf) + 
     blackpop_pct + 
     l_sh_popfborn + 
-    incRate_corrected_estimated_25_ln +
+    genx_noncoll + 
+    incRate_corrected_estimated_25_ln + 
     otch, #cs instrument
   weights = population
 )
@@ -89,7 +93,7 @@ myests2<-cluster.robust.se(
 )
 
 ### (1) and (2) are the same
-tmp<-row.names(myests)=="D.emptopop"
+tmp<-row.names(myests)=="D.emptopopc"
 myests[tmp,1]==myests2[tmp,1]
 
 
@@ -100,14 +104,14 @@ myests[tmp,1]==myests2[tmp,1]
 keyest<-myests[tmp,1]
 
 #semi-standardized ( as in fig_ols2sls)
-100 * ( keyest * sd(repdf$D.emptopop) ) #21.6
+100 * ( keyest * sd(repdf$D.emptopopc) ) #8.36
 #incRate is in 0-1 units, so multiply by 100 to get %
 
 #as an elasticity
-100 * keyest
+100 * keyest #2.99
 
 #standardized (as in fig_rffs)
 ( keyest * sd(repdf$D.emptopop) ) / 
-  sd(repdf$D.incRate_corrected_estimated_25_ln) #0.62
+  sd(repdf$D.incRate_corrected_estimated_25_ln) #0.26
 
 

@@ -18,6 +18,7 @@ rootdir<-find_root(
   criterion=has_file('china shock.Rproj')
 )
 codedir<-file.path(rootdir,"code")
+thiscompdir<-codedir
 setwd(codedir); dir()
 source('dirs.R')
 source('functions.R')
@@ -27,7 +28,8 @@ setwd(filesdir); dir()
 load("03_estimated.RData")
 
 #load a function to get prettynames
-setwd(codedir); dir()
+setwd(thiscompdir)
+source('dirs.R')
 source('functions.R')
 
 #########################################################
@@ -40,22 +42,22 @@ require(extrafont)
 require(RColorBrewer)
 require(scales)
 #load fonts
-loadfonts(quiet=T) #register w/ pdf
-loadfonts(device = "win",quiet=T) #register w/ windows
-#fonts()
-#ghostscript
-Sys.setenv(
-  R_GSCMD = gsdir_full
-)
-#initialize graphlist
-gs.list<-list()
+# loadfonts(quiet=T) #register w/ pdf
+# loadfonts(device = "win",quiet=T) #register w/ windows
+# #fonts()
+# #ghostscript
+# Sys.setenv(
+#   R_GSCMD = gsdir_full
+# )
+# #initialize graphlist
+# gs.list<-list()
 
 #quick function to outputdfs
 output <- function(df,tmpname,fig=NULL) {
   
   setwd(outputdir)
-  if( str_detect(tmpname,"\\.pdf$") ) 
-    tmpname<-str_replace(tmpname,"\\.pdf$",".csv")
+  if( str_detect(tmpname,"\\.pdf$|\\.png$") ) 
+    tmpname<-str_replace(tmpname,"\\.pdf$|\\.png$",".csv")
   
   #get just the vars used for plotting
   if(is.null(fig)) {
@@ -156,11 +158,51 @@ fill.labels<-c(
 #########################################################
 #########################################################
 
+#for writeup
+calcs_list<-list()
+
+finaldf[
+  finaldf$prefmods==T & 
+    finaldf$var%in%c('D.emptopopc','D.emptopop'),
+  ]
+
+tmpdf<-finaldf[
+  finaldf$instrumented=='instrumented' & finaldf$var%in%c('D.unemprate'),
+]
+tmpdf
+finaldf[
+  finaldf$stage=='firststage' & 
+    finaldf$var=='otch' & 
+    (
+      finaldf$prefmods==T |
+        finaldf$endogenous%in%c('manuf_china','unemp_china')
+    )
+  ,
+  c('endogenous','mu.sd')
+]
+
+
+
+finaldf[
+  finaldf$dv=='D.violent_crt' & 
+    finaldf$var%in%c('D.emptopopc','D.emptopop'),
+]
+
+#########################################################
+#########################################################
+
 #MAKE 1S PLOTS
 #rf, 1s estimate
 #for preferred spec
 
-tmp<-finaldf$prefmods &
+tmp<-(
+  finaldf$prefmods |
+    finaldf$endogenous%in%c(
+      #'emptopopc_china',
+      'manuf_china',
+      'unemp_china'
+    )
+) &
   finaldf$var%in%c(
     'otch',
     "D.emptopop",
@@ -240,14 +282,23 @@ g.tmp <- ggplot(
   ylab("\nStandardized Estimate") +
   theme_bw()
 
-g.tmp
-tmpname<-"fig_rffs.pdf"
-gs.list[[tmpname]]<-list(
-  graph=g.tmp,
+setwd(outputdir)
+tmpname<-"fig_rffs.png"
+ggsave(
+  plot=g.tmp,
   filename=tmpname,
   width=3.75 * 1.5,
   height=4.94 * 1.5
 )
+
+plotdf[plotdf$stage=='First Stage',c('endogenous','mu.sd')]
+
+# gs.list[[tmpname]]<-list(
+#   graph=g.tmp,
+#   filename=tmpname,
+#   width=3.75 * 1.5,
+#   height=4.94 * 1.5
+# )
 output(plotdf,tmpname)
 
 #########################################################
@@ -258,14 +309,20 @@ output(plotdf,tmpname)
 #this compares the OLS to 2SLS results
 #across the prefmods
 
-tmp<-(finaldf$prefmods |
-        finaldf$instrumented=="ols" ) &
-  finaldf$var%in%c(
-    "D.emptopop",
-    "D.manushare",
-    "D.emptopopc",
-    "D.unemprate"
-  )
+tmp<-finaldf$prefmods
+tmp<-tmp | finaldf$endogenous%in%c(
+  #'emptopopc_china',
+  'manuf_china',
+  'unemp_china'
+)
+tmp<-tmp | finaldf$instrumented=='ols'
+#tmp<-tmp & finaldf$endogenous!='unemp_china'
+tmp<-tmp & finaldf$var%in%c(
+  "D.emptopop",
+  "D.manushare",
+  "D.emptopopc",
+  "D.unemprate"
+)
 plotdf<-finaldf[tmp,]
 
 tmplevels<-c(
@@ -351,9 +408,10 @@ g.tmp<-ggplot(
   theme_bw()
 g.tmp
 
-tmpname<-"fig_ols2sls.pdf"
-gs.list[[tmpname]]<-list(
-  graph=g.tmp,
+setwd(outputdir)
+tmpname<-"fig_ols2sls.png"
+ggsave(
+  g.tmp,
   filename=tmpname,
   width=6,
   height=5
@@ -365,17 +423,14 @@ output(plotdf,tmpname)
 
 #INCARCERATION, JAIL, IMPRISONMENT, CRIME
 
-#check jailrate
-#check fs crime
-#all these should be unique, if not add a row or stagger..
 tmpvars<-c(
   ###crime
-  "D.pcrt_fs",                           
+  #"D.pcrt_fs",                           
   "D.property_crt",
   "D.burglry_crt",
   "D.mvtheft_crt",
   "D.arson_crt",
-  "D.vcrt_fs",
+  #"D.vcrt_fs",
   "D.violent_crt",
   "D.murder_crt",
   "D.rape_crt",
@@ -387,27 +442,34 @@ tmpvars<-c(
   "D.officers",
   "D.employees",
   ##spending
+  ##(remove share variables, which don't add anything)
   "D.rev",
   "D.spend",
   "D.policespend",
-  "D.policeshare",
+  #"D.policeshare",
   "D.jailspend",
-  "D.jailshare",
+  #"D.jailshare",
   "D.courtspend",
-  "D.courtshare",
+  #"D.courtshare",
   "D.eduspend",
-  "D.edushare",
+  #"D.edushare",
   "D.welfspend",
-  "D.welfshare",
-  "D.healthspend",
-  "D.healthshare"
+  #"D.welfshare",
+  "D.healthspend"
+  #"D.healthshare"
 )
 tmp<-(
   finaldf$dv%in%tmpvars |
     finaldf$prefmods 
-) & finaldf$endogenous=="emptopop_china" & 
-  finaldf$var%in%c("D.emptopop","otch") 
+) & finaldf$endogenous=="emptopopc_china" & 
+  finaldf$var%in%c("D.emptopopc","otch") 
+tmp<- tmp & 
+  #limit the crime vars to exclude the non-log specification
+  !(str_detect(finaldf$dv,"crt") & (finaldf$logdv==F | finaldf$period=='stacked'))
 plotdf<-finaldf[tmp,]
+
+plotdf[plotdf$dv=='D.property_crt',]
+
 
 #sort into facets
 plotdf$facet<-"Crime"
@@ -419,17 +481,17 @@ tmp<-plotdf$dv%in%c(
   "D.rev",
   "D.spend",
   "D.policespend",
-  "D.policeshare",
+  #"D.policeshare",
   "D.jailspend",
-  "D.jailshare",
+  #"D.jailshare",
   "D.courtspend",
-  "D.courtshare",
+  #"D.courtshare",
   "D.eduspend",
-  "D.edushare",
+  #"D.edushare",
   "D.welfspend",
-  "D.welfshare",
-  "D.healthspend",
-  "D.healthshare"
+  #"D.welfshare",
+  "D.healthspend"
+  #"D.healthshare"
 )
 plotdf$facet[tmp]<-"Spending"
 tmplevels<-c(
@@ -446,12 +508,12 @@ plotdf$facet <- factor(
 tmplevels<-c(
   ###crime
   "D.property_crt",
-  "D.pcrt_fs",   
+  #"D.pcrt_fs",   
   "D.burglry_crt",
   "D.mvtheft_crt",
   "D.arson_crt",
   "D.violent_crt",
-  "D.vcrt_fs",
+  #"D.vcrt_fs",
   "D.murder_crt",
   "D.rape_crt",
   "D.robbery_crt",
@@ -466,27 +528,27 @@ tmplevels<-c(
   "D.rev",
   "D.spend",
   "D.policespend",
-  "D.policeshare",
+  #"D.policeshare",
   "D.jailspend",
-  "D.jailshare",
+  #"D.jailshare",
   "D.courtspend",
-  "D.courtshare",
+  #"D.courtshare",
   "D.eduspend",
-  "D.edushare",
+  #"D.edushare",
   "D.welfspend",
-  "D.welfshare",
-  "D.healthspend",
-  "D.healthshare"
+  #"D.welfshare",
+  "D.healthspend"
+  #"D.healthshare"
   ##
 ) %>% rev
 tmplabels<-c(
   "Property Crime",
-  "Property Crime (FS)",
+  #"Property Crime (FS)",
   "Auto Theft",
   "Burglary",
   "Arson",  
   "Violent Crime",
-  "Violent Crime (FS)",
+  #"Violent Crime (FS)",
   "Murder",
   "Rape",
   "Robbery",
@@ -499,19 +561,19 @@ tmplabels<-c(
   "Police Employees",
   ###
   "Local Revenue",
-  "All Spending",
+  "Local Spending",
   "Police Spending",
-  "Police Share",
+  #"Police Share",
   "Jail Spending",
-  "Jail Share",
+  #"Jail Share",
   "Court Spending",
-  "Court Share",
+  #"Court Share",
   "Education Spending",
-  "Education Share",
+  #"Education Share",
   "Welfare Spending",
-  "Welfare Share",
-  "Health Spending",
-  "Health Share"
+  #"Welfare Share",
+  "Health Spending"
+  #"Health Share"
 ) %>% rev
 plotdf$dv<-factor(
   plotdf$dv,
@@ -536,7 +598,7 @@ plotdf$stage<-factor(
 )
 
 g.tmp<-ggplot(
-  plotdf,
+  plotdf[plotdf$stage%in%c('Reduced Form','Second Stage'),],
   aes(
     x=dv,
     y=mu.sd,
@@ -571,21 +633,214 @@ g.tmp<-ggplot(
   coord_flip() +
   facet_grid(
     facet ~ stage,
-    scales='free_y',
+    scales='free',
     space='free_y'
   ) +
   theme_bw()
 
-
-tmpname<-"fig_otherdvs.pdf"
-gs.list[[tmpname]]<-list(
-  graph=g.tmp,
+setwd(outputdir)
+tmpname<-"fig_otherdvs.png"
+ggsave(
+  g.tmp,
   filename=tmpname,
   width=8,
   height=8
 )
 output(plotdf,tmpname,g.tmp)
 
+
+
+
+#########################################################
+#########################################################
+
+#RACE-BASED INCARCERATION RATES
+
+tmp<-str_detect(
+  finaldf$dv,
+  'white|black|aapi|native|latinx'
+) &
+  finaldf$endogenous=="emptopopc_china" & 
+  finaldf$var%in%c("D.emptopopc","otch") &
+  finaldf$stage=='secondstage' &
+  !str_detect(finaldf$dv,'estimated0')
+plotdf<-finaldf[tmp,]
+
+#get the race and institution from the name
+plotdf$race <- str_extract(
+  plotdf$dv,
+  'white|black|aapi|native|latinx'
+)
+tmplevels<-c(
+  'white',
+         'black',
+         'latinx',
+         'native',
+         'aapi'
+) %>% rev
+tmplabels<-c(
+  'White',
+  'Black',
+  'Hispanic',
+  'Native',
+  'AAPI'
+) %>% rev
+plotdf$race <- factor(plotdf$race,tmplevels,tmplabels)
+plotdf$institution <- str_extract(
+  plotdf$dv,
+  'impRate|incRate|jailRate'
+)
+tmplevels<-c(
+  'incRate','impRate','jailRate'
+)
+tmplabels<-c(
+  'Incarceration','Prison','Jail'
+)
+plotdf$institution <- factor(plotdf$institution,tmplevels,tmplabels)
+
+#imputation
+plotdf$threshold <- str_extract(
+  plotdf$dv,
+  "25|75"
+)
+plotdf$threshold <- paste0("<=",plotdf$threshold,'%')
+
+#add the main estimates
+tmp<-(
+  finaldf$dv%in%c(
+    'D.impRate_corrected_estimated_25',
+    'D.jailRate_corrected_estimated_25',
+    #'D.incRate_corrected_estimated_25',
+    'D.impRate_corrected_estimated_75',
+    'D.jailRate_corrected_estimated_75',
+    'D.incRate_corrected_estimated_75'
+  ) | finaldf$prefmods
+) & finaldf$endogenous=="emptopopc_china" & 
+  finaldf$var%in%c("D.emptopopc")
+extradf<-finaldf[tmp,]
+extradf$threshold <- str_extract(
+  extradf$dv,
+  "25|75"
+)
+extradf$threshold <- paste0("<=",extradf$threshold,'%')
+extradf$institution <- str_extract(
+  extradf$dv,
+  'impRate|incRate|jailRate'
+)
+tmplevels<-c(
+  'incRate','impRate','jailRate'
+)
+tmplabels<-c(
+  'Incarceration','Prison','Jail'
+)
+extradf$institution <- factor(extradf$institution,tmplevels,tmplabels)
+
+#limit threshold
+plotdf<-plotdf[plotdf$threshold=="<=75%",]
+extradf<-extradf[extradf$threshold=="<=75%",]
+
+g.tmp<-ggplot(
+  plotdf,
+  aes(
+    x=race,
+    y=mu.sd,
+    ymin=mu.sd.min,
+    ymax=mu.sd.max,
+    shape=pval.shp
+  )
+) +
+  geom_point(
+    size=2
+  ) +
+  geom_errorbar(
+    size=0.4,
+    width=0.2
+  ) +
+  geom_hline(
+    yintercept=0,
+    linetype='dashed',
+    color='black'
+  ) +
+  geom_hline(
+    data=extradf,
+    aes(yintercept=mu.sd),
+    linetype='dashed',
+    color='red'
+  ) +
+  scale_shape_manual(
+    name="",
+    values=tmpshapes,
+    labels=shp.labels,
+    drop=F
+  ) +
+  scale_color_discrete(
+    name=""
+  ) +
+  ylab("\nStandarized Estimate") +
+  xlab("") +
+  coord_flip() +
+  facet_grid(
+    threshold ~ institution,
+    scales='free_y',
+    space='free_y'
+  ) +
+  theme_bw()
+
+setwd(outputdir)
+tmpname<-"fig_effectsbyrace.png"
+ggsave(
+  g.tmp,
+  filename=tmpname,
+  width=9,
+  height=4.5/1.5
+)
+output(plotdf,tmpname,g.tmp)
+
+#what are the results in the 25 case?
+tmp<-str_detect(
+  finaldf$dv,
+  'white|black|aapi|native|latinx'
+) &
+  finaldf$endogenous=="emptopopc_china" & 
+  finaldf$var%in%c("D.emptopopc","otch") &
+  finaldf$stage=='secondstage' &
+  !str_detect(finaldf$dv,'estimated0') & 
+  str_detect(finaldf$dv,'25$')
+plotdf<-finaldf[tmp,]
+plotdf<-plotdf[,c('dv','mu.sd','pval.class')]
+plotdf[order(plotdf$mu.sd),]
+
+#these are the results where adding 0.1 makes a big difference
+#in other words, native and aapi results are not robust to zero coding
+#so we will not include these.. 
+tmp<-str_detect(
+  finaldf$dv,
+  'white|black|aapi|native|latinx'
+) &
+  finaldf$endogenous=="emptopopc_china" & 
+  finaldf$var%in%c("D.emptopopc","otch") &
+  finaldf$stage=='secondstage' &
+  str_detect(finaldf$dv,'estimated0') & 
+  str_detect(finaldf$dv,'75$')
+plotdf<-finaldf[tmp,]
+# plotdf$zero<-ifelse(str_detect(plotdf$dv,'estimated0'),'smallval','zero')
+# plotdf$dv <- str_replace(plotdf$dv,'estimated0','estimated')
+plotdf<-plotdf[,c('dv','mu.sd','pval.class')]
+plotdf[order(plotdf$mu.sd),]
+
+#what are the results when we instrument for black/white emptopop directly? 
+tmp<-str_detect(
+  finaldf$dv,'black|white'
+) &
+  str_detect(
+    finaldf$endogenous,'black|white'
+  ) & (
+    str_detect(
+      finaldf$var,'D.emptopopc'
+    ) | finaldf$var=='otch'
+  )
+finaldf[tmp,c('endogenous','var','mu.sd','pval','pval.class','stage')]
+diagsdf[diagsdf$i%in%unique(finaldf$i[tmp]) & diagsdf$test=='weak instruments',]
 
 #########################################################
 #########################################################
@@ -596,12 +851,14 @@ output(plotdf,tmpname,g.tmp)
 #corrected jail/inc populations for double-counting
 
 tmp<-str_detect(finaldf$dv,"D.incRate") &
+  !str_detect(finaldf$dv,'vera2002') & #not the old vera var
+  !str_detect(finaldf$dv,'black|white|aapi|native|latinx') & #none of the race vars
   (
     finaldf$dv!="D.incRate_corrected_estimated_25" |
       finaldf$prefmods
   ) &
-  finaldf$endogenous=="emptopop_china" & 
-  finaldf$var%in%c("otch","D.emptopop")
+  finaldf$endogenous=="emptopopc_china" & 
+  finaldf$var%in%c("otch","D.emptopopc") 
 plotdf<-finaldf[tmp,]
 
 #quick plot of how N changes as threshold changed
@@ -614,8 +871,8 @@ tmplevels<-c(
   "_uncorrected"
 )
 tmplabels<-c(
-  "Adjusted for DC",
-  "Unadjusted for DC"
+  "Adjusted for Double-Counting",
+  "Unadjusted for Double-Counting"
 )
 plotdf$corrected<-factor(
   plotdf$corrected,
@@ -641,7 +898,7 @@ plotdf$estimated<-factor(
   tmplabels
 )
 
-plotdf$threshold<-str_extract(
+plotdf$threshold<-100 - str_extract(
   plotdf$dv,
   "[0-9]{1,3}$"
 ) %>% as.numeric
@@ -678,7 +935,7 @@ plotdf$prefmods<-factor(
 )
 tmpcolors<-c(
   "red",
-  "black"
+       "black"
 )
 names(tmpcolors)<-tmplabels
 
@@ -717,18 +974,18 @@ g.tmp<-ggplot(
     drop=T
   ) +
   ylab("\nStandardized Estimate") +
-  xlab("Inclusion Threshold\n") +
+  xlab("% of CZ Population With Data\n") +
   coord_flip() +
   facet_grid(
     stage ~ corrected + estimated
   ) +
   theme_bw()
 
-tmpname<-"fig_datachoices.pdf"
-gs.list[[tmpname]]<-list(
-  graph=g.tmp,
+tmpname<-"fig_datachoices.png"
+ggsave(
+  plot=g.tmp,
   filename=tmpname,
-  width=8,
+  width=10,
   height=6
 )
 output(plotdf,tmpname)
@@ -763,8 +1020,8 @@ output(plotdf,tmpname)
 
 #ROBUSTNESS TO MODELING, SAMPLE, PERIOD
 
-mostprefs<-c('emptopop_china')#,'emptopopc_china')
-prefvars<-c('D.emptopop')#,'D.emptopopc')
+mostprefs<-c('emptopopc_china')#,'emptopopc_china')
+prefvars<-c('D.emptopopc')#,'D.emptopopc')
 
 tmp<-robdf$endogenous%in%mostprefs &
   robdf$dv=="D.incRate_corrected_estimated_25" &
@@ -949,7 +1206,7 @@ g.tmp<-ggplot(
   ) +
   facet_grid(
     group ~ stage,
-    scales='free_y',
+    scales='free',
     space = 'free_y'
   ) +
   coord_flip() +
@@ -958,35 +1215,42 @@ g.tmp<-ggplot(
   theme_bw()
 g.tmp
 
-tmpname<-"fig_robustness.pdf"
-gs.list[[tmpname]]<-list(
-  graph=g.tmp,
+setwd(outputdir)
+tmpname<-"fig_robustness.png"
+ggsave(
+  plot=g.tmp,
   filename=tmpname,
   width=10,
   height=7
 )
-output(plotdf,tmpname,g.tmp)
+# gs.list[[tmpname]]<-list(
+#   graph=g.tmp,
+#   filename=tmpname,
+#   width=10,
+#   height=7
+# )
+# output(plotdf,tmpname,g.tmp)
 
 #########################################################
 #########################################################
 
-#OUTPUT
-#output graphlist
-setwd(outputdir)
-this.sequence<-seq_along(gs.list)
-for(i in this.sequence) {
-  print(
-    paste0(
-      "saving ",i," of ",length(this.sequence)
-    )
-  )
-  thiselement<-gs.list[[i]]
-  ggsave(
-    filename=thiselement$filename,
-    plot=thiselement$graph,
-    width=thiselement$width,
-    height=thiselement$height
-  )
-  Sys.sleep(0.5)
-}
+# #OUTPUT
+# #output graphlist
+# setwd(outputdir)
+# this.sequence<-seq_along(gs.list)
+# for(i in this.sequence) {
+#   print(
+#     paste0(
+#       "saving ",i," of ",length(this.sequence)
+#     )
+#   )
+#   thiselement<-gs.list[[i]]
+#   ggsave(
+#     filename=thiselement$filename,
+#     plot=thiselement$graph,
+#     width=thiselement$width,
+#     height=thiselement$height
+#   )
+#   Sys.sleep(0.5)
+# }
 

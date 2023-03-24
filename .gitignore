@@ -10,6 +10,7 @@ files/
 output/
 data/
 paper/
+r&r/
 
 #select code
 code/00_runall.R

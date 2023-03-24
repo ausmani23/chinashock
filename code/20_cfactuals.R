@@ -93,11 +93,11 @@ cfactuals<-c(
   "observed",
   "predicted", #as observed,
   ####
-  "lowptile", 
-  "stable",
-  "nodecline",
-  "highptile",
-  "90sboom",
+  #"lowptile", 
+  #"stable",
+  #"nodecline",
+  #"highptile",
+  #"90sboom",
   "90spreserved"
 )
 
@@ -334,6 +334,7 @@ tmpoutput<-lapply(tmpseq.j,function(j) {
     
     #return to single df
     newdf<-rbind.fill(thisdfs)
+    #exponentiate, since these were in log
     newdf$incRate_st<-exp(newdf$incRate_ln_st)
     newdf$incRate_end<-exp(newdf$incRate_ln_end)
     tmporder<-order(newdf$order)

@@ -53,7 +53,6 @@ set.seed(23)
 #use a deflator from the observed data to make sure
 #observed endpoint in first period matches the
 #observed startpoint in the second, and then
-
 #apply this deflator to all predictions in first period
 
 #(2)
@@ -108,13 +107,13 @@ bothp.czs<-unique(ratesdf$cz90[tmp])
 #for those which only have first period
 tmp<-!is.na(ratesdf$`1991`) & 
   is.na(ratesdf$`2011`)
-firstp.czs_only<-unique(ratesdf$cz90[tmp])
+firstp.czs_only<-unique(ratesdf$cz90[tmp]) #about 20
 ratesdf$`1999`[tmp]<-ratesdf$`1999a`[tmp]
 
 #for those which only have second period
 tmp<-is.na(ratesdf$`1991`) & 
   !is.na(ratesdf$`2011`)
-secondp.czs_only<-unique(ratesdf$cz90[tmp])
+secondp.czs_only<-unique(ratesdf$cz90[tmp]) #about 40
 ratesdf$`1999`[tmp]<-ratesdf$`1999b`[tmp]
 
 #keep only 1999
@@ -132,7 +131,7 @@ names(ratesdf)[tmp]<-paste0(
 #bring in actual incrates
 setwd(datadir); dir()
 veradf<-read.csv(
-  'vera_2002.csv',
+  'vera_2211.csv',
   stringsAsFactors=F
 )
 tmpvars<-c(
@@ -198,10 +197,20 @@ names(ratesdf)[names(ratesdf)=="FALSE"]<-"raw"
 #and this will give us the kind of graph that we want..
 ratesdf$inflator<-ratesdf$pred/ratesdf$raw
 
-#ipolate this inflator, within cz,rep,seq
+#ipolate the rates
 ratesdf<-data.table(ratesdf)
+ratesdf[
+  ,
+  raw:=na.approx(raw,na.rm=F)
+  ,
+  by=c(
+    "cz90",
+    "rep",
+    "seq.j"
+  )
+  ]
 
-#calculate the inflator
+#ipolate the inflator
 ratesdf[
   ,
   inflator:=na.approx(inflator,na.rm=F)
@@ -211,7 +220,7 @@ ratesdf[
     "rep",
     "seq.j"
   )
-  ]
+]
 
 #this is the value for plotting
 ratesdf$pred_plot<-
@@ -248,9 +257,9 @@ plotdfs<-list()
 #deflation factor to apply to the secon
 
 #this should be a weighted average..
-setwd(file.path(datadir,"prelim")); dir()
-tmpdf<-fread("county-cz1990-incarceration-estimates_2002.csv")
-popdf<-tmpdf[,c("commuting_zone_1990","year","total_pop_15to64"),with=F]
+setwd(file.path(datadir,"prelim","vera_new")); dir()
+tmpdf<-fread("incarceration_trends_cz90.csv")
+popdf<-tmpdf[,c("cz90","year","total_pop_15to64"),with=F]
 names(popdf)<-c("cz90","year","pop1564")
 popdf<-popdf[
   !is.na(cz90) & !is.na(year)
@@ -276,7 +285,7 @@ rawratedfs<-lapply(tmpseq.i,function(i) {
   thisp<-periods[i]
   thisp_years<-period_years[[i]]
   tmp<-ratesdf$periods%in%c(paste0(thisp,"only"),"both") &
-    ratesdf$year%in%thisp_years
+   ratesdf$year%in%thisp_years
   tmpdf<-data.table(ratesdf[tmp,])
   tmpdf$periods<-NULL
   avgdf<-tmpdf[
@@ -387,8 +396,7 @@ sumratedf<-merge(
 
 #since we extend 90s boom into 2000s,
 #natural question is: 
-#how much did incarceration increase? 
-#how much would it have increased? 
+#how does this change the trajectory of incarceration..
 
 tmpf<-function(base,end) {
   100 * (end-base)/base
@@ -424,6 +432,22 @@ sumstatsdf<-statsdf[
     "endogenous"
   )
   ]
+
+statsdf2<-pivot_wider(
+  statsdf,
+  names_from=cfactual,
+  values_from=pctchange
+) %>% data.table
+statsdf2$difference<-statsdf2$`90spreserved` - statsdf2$predicted
+sumstatsdf2<-statsdf2[
+  ,
+  summarize.distribution2(difference)
+  ,
+  by=c(
+    "cz90",
+    "endogenous"
+  )
+]
 
 #########################################################
 #########################################################
@@ -580,6 +604,11 @@ write.csv(
 write.csv(
   sumstatsdf,
   'sumstatsdf.csv',
+  row.names=F
+)
+write.csv(
+  sumstatsdf2,
+  'sumstatsdf2.csv',
   row.names=F
 )
 

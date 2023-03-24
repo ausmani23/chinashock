@@ -13,6 +13,9 @@ This figure contrasts estimates derived from OLS to estimates derived from regre
 ###fig_rffs
 This figure shows reduced-form, first-stage and second-stage estimates from regressions in which use the China Shock to instrument for each of four endogneous measures of labor market health. Naturally, the reduced-form estimates are identical across each of the four models, so variation in the second-stage estimates is due to variation at the first stage. See Section \ref{results}.
 
+###fig_effectsbyrace
+This figure shows our estimates of the standardized effect of the employment-to-population ratio on race-specific incarceration rates, distinguished by institution (horizontally) and by imputation strategy (vertically). As we explain in the main text, our estimates are positive, but their statistical significance depends substantially on imputing incarceration rates in counties with missing data. We also find some evidence of an effect on jail incarceration (in contrast to our main results), though, because the Vera data do not report double-counted prisoners by race, we caution against reading too much into these results. The dashed red line shows the aggregate (i.e. not race-specific) estimate that corresponds. See Section \ref{results}
+
 ###fig_robustness
 This figure illustrates the robustness of our main result to a variety of alternative, plausible specifications. The dashed red line indicates our preferred estimate. These are discussed in detail in Section \ref{results_robustness}.
 

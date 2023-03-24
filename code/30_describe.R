@@ -51,8 +51,8 @@ gs.list<-list()
 output <- function(df,tmpname,fig=NULL) {
   
   setwd(outputdir)
-  if( str_detect(tmpname,"\\.pdf$") ) 
-    tmpname<-str_replace(tmpname,"\\.pdf$",".csv")
+  if( str_detect(tmpname,"\\.pdf$|\\.png$") ) 
+    tmpname<-str_replace(tmpname,"\\.pdf$|\\.png$",".csv")
   
   #get just the vars used for plotting
   if(is.null(fig)) {
@@ -123,7 +123,9 @@ tmpcols<-c(
   "l_sh_popfborn",
   "l_sh_empl_f",
   "l_sh_routine33",
-  "l_task_outsource"
+  "l_task_outsource",
+  "genx_noncoll",
+  "genx_hsdrop"
 )
 tmpcovarsdf<-covarsdf[,tmpcols]
 tmp<-tmpcovarsdf$year==1991
@@ -156,7 +158,9 @@ plotdf<-lapply(shockvars,function(v) {
     "l_sh_popfborn",
     "l_sh_empl_f",
     "l_sh_routine33",
-    "l_task_outsource"
+    "l_task_outsource",
+    "genx_noncoll",
+    "genx_hsdrop"
   )
   returndf<-lapply(stvars,function(sv) {
     #sv<-stvars[1]
@@ -191,6 +195,8 @@ tmpdf<-data.frame(
     'Controls',
     'Extra',
     'Extra',
+    'Extra',
+    'Controls',
     'Extra'
   )
 )
@@ -253,14 +259,22 @@ g.tmp<-ggplot(
   xlab("") +
   ylim(-1,1) +
   theme_bw()
-g.tmp
-tmpname<-"fig_otch_corrs.pdf"
-gs.list[[tmpname]]<-list(
-  graph=g.tmp,
+
+tmpname<-"fig_otch_corrs.png"
+setwd(outputdir)
+ggsave(
+  plot=g.tmp,
   filename=tmpname,
   width=10/2,
   height=10/2
 )
+# gs.list[[tmpname]]<-list(
+#   graph=g.tmp,
+#   filename=tmpname,
+#   width=10/2,
+#   height=10/2
+# )
+
 output(plotdf,tmpname)
 
 #########################################################
@@ -271,7 +285,7 @@ output(plotdf,tmpname)
 
 setwd(filesdir)
 prefmods<-readRDS('prefmods.RDS')
-tmpdf<-prefmods$`1`$prefmod$df
+tmpdf<-prefmods[[1]]$prefmod$df
 tmpdf<-tmpdf[,c("cz90","periodf")]
 
 #load cz info
@@ -438,7 +452,14 @@ g.tmp<-ggplot(
     legend.direction='horizontal'
   )
 
-tmpname<-"fig_sample.pdf"
+tmpname<-"fig_sample.png"
+setwd(outputdir)
+ggsave(
+  plot=g.tmp,
+  filename=tmpname,
+  width=8*2,
+  height=8*2
+)
 gs.list[[tmpname]]<-list(
   graph=g.tmp,
   filename=tmpname,
@@ -483,16 +504,15 @@ tmpdf<-tmpdf[
   .(pop1564=sum(pop1564))
   ,
   by=c("cz90","year")
-  ]
+]
 veradf<-merge(
   veradf,
   tmpdf[,c('cz90','year','pop1564')]
 )
 
-#how many czs?
+#how many czs in the vera data?
 head(veradf)
-tmp<-!is.na(veradf$incRate) &
-  veradf$year%in%c(1991:2011)
+tmp<-!is.na(veradf$incRate) 
 veradf$cz90[tmp] %>% unique %>% length
 
 #what is avaialbility like
@@ -519,7 +539,7 @@ plotdfs[["raw"]]<-tmpdf
 #get vera data in regsample
 setwd(filesdir)
 prefmods<-readRDS('prefmods.RDS')
-tmpdf<-prefmods$`1`$prefmod$df
+tmpdf<-prefmods[[1]]$prefmod$df
 tmpdf<-tmpdf[,c("cz90","periodf")]
 tmpdf<-by(tmpdf,tmpdf$cz90,function(df) {
   #df<-tmpdf[tmpdf$cz90==100,]
@@ -543,7 +563,7 @@ tmpdf<-by(tmpdf,tmpdf$cz90,function(df) {
 }) %>% rbind.fill
 
 #count how many are in pref, for writeup
-unique(tmpdf$cz90) %>% length #476
+unique(tmpdf$cz90) %>% length 
 
 intersect(
   names(tmpdf),
@@ -650,6 +670,10 @@ plotdf$source<-factor(
 tmptypes<-c(3,2,1)
 names(tmptypes)<-levels(plotdf$source)
 
+#stop where national rate stops
+maxyear<-max(plotdf$year[plotdf$source=='National Rate'])
+plotdf<-plotdf[plotdf$year<=maxyear,]
+
 g.tmp<-ggplot(
   plotdf,
   aes(
@@ -677,13 +701,20 @@ g.tmp<-ggplot(
     legend.direction = 'horizontal'
   )
 
-tmpname<-"fig_incrates.pdf"
-gs.list[[tmpname]]<-list(
-  graph=g.tmp,
+tmpname<-"fig_incrates.png"
+setwd(outputdir)
+ggsave(
+  plot=g.tmp,
   filename=tmpname,
   width=10,
   height=6
 )
+# gs.list[[tmpname]]<-list(
+#   graph=g.tmp,
+#   filename=tmpname,
+#   width=10,
+#   height=6
+# )
 
 #########################################################
 #########################################################
@@ -756,7 +787,7 @@ plotdf<-plotdf[
     "var",
     "var2"
   )
-  ]
+]
 
 corrsdf<-by(plotdf,plotdf$var,function(df) {
   #df<-plotdf[plotdf$var=="manushare",]
@@ -786,26 +817,44 @@ corrsdf$textdisp<-paste0(
   corrsdf$pval,")"
 )
 
-tmplevels<-c(
-  "emptopop",
-  "unemployment",
-  "manushare"
-)
-tmplabels<-c(
-  "Emp-to-Pop Ratio (CPS)",
-  "Unemployment Rate (CPS)",
-  "Manufacturing Share (CES)"
-)
-plotdf$var<-factor(
-  plotdf$var,
-  tmplevels,
-  tmplabels
-)
-corrsdf$var<-factor(
-  corrsdf$var,
-  tmplevels,
-  tmplabels
-)
+#show just unemploiyment rate
+plotdf<-plotdf[var=='unemployment']
+corrsdf<-corrsdf[corrsdf$var=='unemployment',]
+
+# tmplevels<-c(
+#   "emptopop",
+#   "unemployment",
+#   "manushare"
+# )
+# tmplabels<-c(
+#   "Emp-to-Pop Ratio (CPS)",
+#   "Unemployment Rate (CPS)",
+#   "Manufacturing Share (CES)"
+# )
+# plotdf$var<-factor(
+#   plotdf$var,
+#   tmplevels,
+#   tmplabels
+# )
+# corrsdf$var<-factor(
+#   corrsdf$var,
+#   tmplevels,
+#   tmplabels
+# )
+# 
+# tmplevels<-c(
+#   "incRate",
+#   "lmind"
+# )
+# tmplabels<-c(
+#   "Incarceration Rate",
+#   "Labor Market Indicator"
+# )
+# plotdf$var2<-factor(
+#   plotdf$var2,
+#   tmplevels,
+#   tmplabels
+# )
 
 tmplevels<-c(
   "incRate",
@@ -813,7 +862,7 @@ tmplevels<-c(
 )
 tmplabels<-c(
   "Incarceration Rate",
-  "Labor Market Indicator"
+  "Unemployment Rate"
 )
 plotdf$var2<-factor(
   plotdf$var2,
@@ -844,10 +893,10 @@ g.tmp<-ggplot(
     y=1.75,
     size=4
   ) +
-  facet_wrap(
-    ~ var,
-    ncol=1
-  ) +
+  # facet_wrap(
+  #   ~ var,
+  #   ncol=1
+  # ) +
   xlab("") +
   ylab("Standardized Level\n") +
   theme_bw() +
@@ -856,12 +905,20 @@ g.tmp<-ggplot(
     legend.direction='horizontal'
   )
 
-tmpname<-"fig_inclm_corrs.pdf"
+setwd(outputdir)
+tmpname<-"fig_inclm_corrs.png"
+ggsave(
+  plot=g.tmp,
+  filename=tmpname,
+  width=5,
+  height=4
+)
+
 gs.list[[tmpname]]<-list(
   graph=g.tmp,
   filename=tmpname,
   width=5,
-  height=7
+  height=4
 )
 
 
@@ -871,6 +928,17 @@ gs.list[[tmpname]]<-list(
 #DENSITY AND CORRELATION PLOTS
 #of the shocks, for the cfactuals
 #where is 20th, where is 80th, where is stability
+
+setwd(filesdir); dir()
+fulloutput<-readRDS('fulloutput.RDS')
+tmpdf<-fread('regresults.csv')
+tmp<-tmpdf$prefmods | (
+  tmpdf$endogenous%in%c(
+    'manuf_china',
+    'unemp_china'
+  ) & tmpdf$instrumented=='instrumented'
+)
+prefmods<-fulloutput[unique(tmpdf$i[tmp])]
 
 myvars<-c(
   "D.manushare",
@@ -882,7 +950,8 @@ tmpseq.i<-1:length(myvars)
 tmpdfs<-lapply(tmpseq.i,function(i) {
   #i<-1
   modname<-i
-  tmpdf<-prefmods[[i]]$prefmod$df
+  tmpdf<-prefmods[[i]]$df
+  
   thisvar<-myvars[myvars%in%names(tmpdf)]
   tmpvars<-c(
     "cz90",
@@ -930,14 +999,14 @@ plotdf<-gather_(
 tmplevels<-c(
   "D.unemprate",
   "D.manushare",
-  "D.emptopopc",
-  "D.emptopop"
+  "D.emptopop",
+  "D.emptopopc"
 ) %>% rev
 tmplabels<-c(
   "Chg. in Unemployment Rate",
   "Chg. in Manufacturing Share",
-  "Chg. in Emp-to-Pop Ratio (IPUMS)",
-  "Chg. in Emp-to-Pop Ratio (CBP)"
+  "Chg. in Emp-to-Pop Ratio (CBP)",
+  "Chg. in Emp-to-Pop Ratio (IPUMS)"
 ) %>% rev
 plotdf$var<-factor(
   plotdf$var,
@@ -1053,7 +1122,14 @@ g.tmp<-ggplot(
   ylab("") +
   theme_bw()
 
-tmpname<-"fig_densities.pdf"
+tmpname<-"fig_densities.png"
+setwd(outputdir)
+ggsave(
+  plot=g.tmp,
+  filename=tmpname,
+  width=12,
+  height=6
+)
 gs.list[[tmpname]]<-list(
   graph=g.tmp,
   filename=tmpname,
@@ -1087,7 +1163,14 @@ g.tmp<-ggplot(
     panel.grid.minor = element_blank()
   )
 
-tmpname<-"fig_endog_corrs.pdf"
+tmpname<-"fig_endog_corrs.png"
+setwd(outputdir)
+ggsave(
+  plot=g.tmp,
+  filename=tmpname,
+  width=10,
+  height=4
+)
 gs.list[[tmpname]]<-list(
   graph=g.tmp,
   filename=tmpname,
@@ -1099,356 +1182,63 @@ output(cordf,tmpname)
 #########################################################
 #########################################################
 
-#CERTAINTY VS. SEVERITY
-#and SOCIAL VS. PENAL
+#PRISONS VS POLICE, SOCIAL VS PENAL
 
 setwd(prelimdir); dir()
-policedf<-fread(
-  'wiki_police.csv'
-)
-wpbdf<-fread(
-  'wpb.csv'
-)
-homdf<-fread(
-  'wb_homicides.csv'
-)
-tmpdf<-rbind.fill(
-  policedf,
-  wpbdf,
-  homdf
-)
-tmp<-tmpdf$statistic%in%c(
-  'prisoners',
-  'police',
-  'homicides'
-)
-tmpvars<-c(
-  'cowcode',
-  'countryname',
-  'year',
-  'statistic',
-  'value'
-)
-tmpdf<-tmpdf[tmp,tmpvars] %>%
-  data.table
+pbdf<-fread('penalbalance_chinashock.csv')
+tmp<-!is.na(pbdf$penalbalance)
+pbdf<-pbdf[tmp,]
+spdf<-fread('ratiosp_chinashock.csv')
+spdf$countryname[spdf$countryname=='United States']<-'USA'
+#use E+W as stand-in for UK
+spdf$countryname[spdf$countryname=='United Kingdom']<-'England and Wales'
 
-#fix value
-tmpnum<-str_replace_all(
-  tmpdf$value,
-  "c|c\\.|\\s|,|\\*",
-  ""
-) %>% as.numeric
-tmpdf$value[is.na(tmpnum)] #some additions, fix later
-tmpdf[is.na(tmpnum),] #all in Rwanda
-tmpdf$value<-tmpnum
+tmp<-pbdf$countryname%in%spdf$countryname
+pbdf$countryname[!tmp]
+tmp<-spdf$countryname%in%pbdf$countryname
+spdf$countryname[!tmp]
 
-#fix so we get UK also
-tmp<-tmpdf$countryname%in%c("England and Wales","Scotland")
-ukdf<-tmpdf[tmp,]
-ukdf$countryname<-"United Kingdom"
-ukdf$cowcode<-"200"
-ukdf<-ukdf[
-  ,
-  .(
-    value=sum(value)
-  )
-  ,
-  by=c(
-    'cowcode',
-    'countryname',
-    'year',
-    'statistic'
-  )
-]
-tmpdf<-tmpdf[!tmp,] #drop england/wales & scotland
-tmpdf<-rbind.fill( #add uk
-  tmpdf,
-  ukdf
-) %>% data.table
-
-#make sure each is unique
-tmpdf$decade<-floor(tmpdf$year/10) * 10
-tmpdf<-tmpdf[
-  decade==2010
-  ,
-  .(
-    value=mean(value)
-  )
-  ,
-  by=c(
-    'cowcode',
-    'countryname',
-    'decade',
-    'statistic'
-  )
-]
-tmpdf<-spread(
-  tmpdf,
-  statistic,
-  value
-)
-tmpdf<-tmpdf[complete.cases(tmpdf),]
-
-#add population
-dir()
-popdf<-fread(
-  'mpd2018df.csv'
-)
-tmpvars<-c('cowcode','year','population','gdppc')
-popdf$decade<-floor(popdf$year/10) * 10
-popdf<-popdf[
-  decade==2010
-  ,
-  .(
-    pop=mean(population,na.rm=T),
-    gdppc=mean(gdppc,na.rm=T)
-  )
-  ,
-  by=c(
-    'cowcode',
-    'countryname',
-    'decade'
-  )
-]
-tmpvars<-c('cowcode','decade','pop','gdppc')
-popdf<-popdf[,tmpvars,with=F]
-
-#merge
-tmpdf<-merge(
-  tmpdf,
-  popdf,
-  both=T
-)
-
-#fix countrynames
-tmpdf$countryname<-str_replace(
-  tmpdf$countryname,
-  "\\s[0-9]{4}\\-[0-9]{4}",
-  ""
-)
-tmp<-tmpdf$countryname=="United States of America"
-tmpdf$countryname[tmp]<-"USA"
-
-#add spending for some oced countries
-setwd(prelimdir); dir()
-spdf <- fread(
-  'oecd_govspending_2017.csv'
-)
-tmp<-spdf$countryname=="Slovak Republic"
-spdf$countryname[tmp]<-"Slovakia"
-tmp<-spdf$countryname=="United States"
-spdf$countryname[tmp]<-"USA"
-tmpsubjects<-c("TOT","PUBORD","SOCPROT","HEALTH","EDU")
-spdf<-spdf[
-  time==2017 & 
-    measure=="value" & 
-    subject%in%tmpsubjects &
-    advanced
-  ,
-  ]
-spdf<-spread(
+plotdf<-merge(
   spdf,
-  subject,
-  value
-) %>% data.table
-names(spdf)<-tolower(names(spdf))
-spdf$ratio_sp<-(spdf$edu + spdf$health + spdf$socprot)/spdf$pubord
-keepvars<-c(
-  "countryname",
-  "ratio_sp"
+  pbdf,
+  by='countryname'
 )
-spdf<-spdf[,keepvars,with=F]
-spdf$decade<-2010
-
-fulldf<-merge(
-  tmpdf,
-  spdf,
-  by=c(
-    'countryname',
-    'decade'
-  ),
-  all.x=T
-)
-
-#make vars
-fulldf$pop <- fulldf$pop*10^3
-fulldf$homicides <- fulldf$homicides * fulldf$pop/10^5
-fulldf$policeperhom <- log(fulldf$police/fulldf$homicides)
-fulldf$prisonersperhom <- log(fulldf$prisoners/fulldf$homicides)
-fulldf$policepercap <- log(fulldf$police/fulldf$pop)
-fulldf$prisonerspercap <- log(fulldf$prisoners/fulldf$pop)
-
-#quick browse of advanced countries only
-tmp<-complete.cases(fulldf)
-fulldf<-fulldf[tmp,]
-fulldf
-fulldf$policeperhom <- exp(fulldf$policeperhom)
-fulldf$prisonersperhom <- exp(fulldf$prisonersperhom)
-fulldf$policepercap <- exp(fulldf$policepercap)*10^5
-
-fulldf$policepercap[fulldf$cowcode==2]
-mean(fulldf$policepercap[fulldf$cowcode!=2])
-fulldf$policeperhom[fulldf$cowcode==2]
-mean(fulldf$policeperhom[fulldf$cowcode!=2])
-fulldf$prisonersperhom[fulldf$cowcode==2]
-mean(fulldf$prisonersperhom[fulldf$cowcode!=2])
+plotdf$cownum<-NULL
 
 
-#########################################################
-#########################################################
-
-#POLICE VS. PRISONS
-
-plotdf<-fulldf
-bigcountries <- plotdf$pop > quantile(plotdf$pop,0.5)
-plotdf<-plotdf[bigcountries,]
-
-#standardize in this sample
-vars<-c('policeperhom','prisonersperhom','policepercap','prisonerspercap')
-for(v in vars) {
-  plotdf[[v]] <- scale(plotdf[[v]])[,1]
-}
-
-#gather, percap,perhom separately
-plotdf<-gather_(
-  plotdf,
-  "var",
-  "val",
-  vars
-)
-tmp<-str_detect(plotdf$var,"perhom")
-plotdf$group<-"percap"
-plotdf$group[tmp]<-"perhom"
-plotdf$var<-str_extract(plotdf$var,"police|prisoners")
-plotdf<-spread(
-  plotdf,
-  var,
-  val
-)
-
-plotdf$usa<-factor(
-  plotdf$cowcode==2,
-  c(T,F)
-)
-tmpcolors<-c('red','black')
-tmpsizes<-c(4,2)
-names(tmpsizes)<-names(tmpcolors)<-c(T,F)
-
-plotdf$group<-factor(
-  plotdf$group,
-  c('percap','perhom'),
-  c('...capita','...homicide')
-)
-
-g.tmp <- ggplot(
-  plotdf,
-  aes(
-    x=prisoners,
-    y=police,
-    label=countryname,
-    color=usa,
-    size=usa
-  )
-) +
-  geom_text(
-    fontface='bold',
-    #size=2
-  ) +
-  geom_hline(yintercept=0) +
-  geom_vline(xintercept=0) +
-  scale_color_manual(
-    values=tmpcolors,
-    guide=F
-  ) +
-  scale_size_manual(
-    values=tmpsizes,
-    guide=F
-  ) +
-  stat_smooth(
-    size=0.5,
-    method='lm',
-    alpha=0.05,
-    linetype='dashed'
-  ) +
-  xlab("\nPrisoners per... (log)") +
-  ylab("Police per... (log)\n") +
-  facet_wrap(
-    ~ group
-  ) +
-  theme_bw() +
-  theme(
-    #axis.line=element_blank(),
-    axis.text.x=element_blank(),
-    axis.text.y=element_blank(),
-    axis.ticks=element_blank(),
-    #axis.title.x=element_blank(),
-    #axis.title.y=element_blank(),
-    legend.position="none",
-    panel.background=element_blank(),
-    panel.border=element_blank(),
-    panel.grid.major=element_blank(),
-    panel.grid.minor=element_blank(),
-    plot.background=element_blank()
-  )
-
-
-tmpname<-"fig_policevsprisons.pdf"
-gs.list[[tmpname]]<-list(
-  graph=g.tmp,
-  filename=tmpname,
-  width=10,
-  height=4
-)
-output(plotdf,tmpname,g.tmp)
-
-
-#########################################################
-#########################################################
-
-#AMERICAN EXCEPTIONALISM
-
-plotdf<-fulldf
-tmp<-complete.cases(plotdf)
-plotdf<-plotdf[tmp,]
-
-#police vs. prisons
-plotdf$prizpolratio <- plotdf$police/plotdf$prisoners
-#plotdf$prizpolratio <- scale(plotdf$prizpolratio)[,1]
-
-
-
-#social penal
-plotdf$spratio <- plotdf$ratio_sp
-#plotdf$spratio <- scale(plotdf$ratio_sp)[,1]
-
-plotdf<-plotdf[,c('countryname','cowcode','prizpolratio','spratio'),with=F]
 plotdf<-gather(
   plotdf,
   var,
   val,
-  prizpolratio:spratio
+  ratio_sp:penalbalance
 )
 plotdf$usa<-factor(
-  plotdf$cowcode==2,
+  plotdf$countryname=='USA',
   c(T,F)
 )
 tmpcolors<-c('red','grey')
 tmpsizes<-c(4,2)
 names(tmpsizes)<-names(tmpcolors)<-c(T,F)
 
-tmporder<-order(plotdf$val[plotdf$var=="prizpolratio"])
-tmplevels <- plotdf$countryname[plotdf$var=="prizpolratio"][tmporder]
+tmporder<-order(-plotdf$val[plotdf$var=="penalbalance"])
+tmplevels <- plotdf$countryname[plotdf$var=="penalbalance"][tmporder]
 plotdf$countryname <- factor(
   plotdf$countryname,
   tmplevels
 )
 
+#s3p: social protection + eductation
+#s2p: social protection
+#sp: social protection + education + health
+#we exclude healthcare spending b/c of strange inefficiencies of US system
+plotdf<-plotdf[plotdf$var%in%c('penalbalance','ratio_sp'),] 
+
 tmplevels<-c(
-  'prizpolratio',
-  'spratio'
+  'penalbalance',
+  'ratio_sp'
 )
 tmplabels<-c(
-  "Police / Prisoners",
+  "Prisoners / Police",
   "Social Spending / Penal Spending"
 )
 plotdf$var <- factor(
@@ -1467,11 +1257,12 @@ g.tmp <- ggplot(
 ) +
   geom_bar(
     stat='identity',
-    color='black'
-    ) + 
+    color='black',
+    width=0.75
+  ) +
   scale_fill_manual(
     values=tmpcolors,
-    guide=F
+    guide='none'
   ) +
   facet_wrap(
     ~ var,
@@ -1482,7 +1273,14 @@ g.tmp <- ggplot(
   xlab("") +
   theme_bw()
 
-tmpname<-"fig_exceptionalism.pdf"
+tmpname<-"fig_exceptionalism.png"
+setwd(outputdir)
+ggsave(
+  plot=g.tmp,
+  filename=tmpname,
+  width=10,
+  height=5
+)
 gs.list[[tmpname]]<-list(
   graph=g.tmp,
   filename=tmpname,
@@ -1495,33 +1293,444 @@ output(plotdf,tmpname,g.tmp)
 #########################################################
 #########################################################
 
-#OUTPUT
-#output graphlist
-setwd(outputdir)
-this.sequence<-seq_along(gs.list)
-for(i in this.sequence) {
-  print(
-    paste0(
-      "saving ",i," of ",length(this.sequence)
-    )
-  )
-  thiselement<-gs.list[[i]]
-  ggsave(
-    #filename="tmp.pdf",
-    filename=thiselement$filename,
-    plot=thiselement$graph,
-    width=thiselement$width,
-    height=thiselement$height
-  )
-  # #embed font
-  # embed_fonts(
-  #   file="tmp.pdf",
-  #   outfile=thiselement$filename
-  # )
-  # file.remove(
-  #   "tmp.pdf"
-  # )
-  #Sys.sleep(0.5)
-}
+# #CERTAINTY VS. SEVERITY
+# #and SOCIAL VS. PENAL
+# 
+# setwd(prelimdir); dir()
+# policedf<-fread(
+#   'wiki_police.csv'
+# )
+# wpbdf<-fread(
+#   'wpb.csv'
+# )
+# homdf<-fread(
+#   'wb_homicides.csv'
+# )
+# tmpdf<-rbind.fill(
+#   policedf,
+#   wpbdf,
+#   homdf
+# )
+# tmp<-tmpdf$statistic%in%c(
+#   'prisoners',
+#   'police',
+#   'homicides'
+# )
+# tmpvars<-c(
+#   'cowcode',
+#   'countryname',
+#   'year',
+#   'statistic',
+#   'value'
+# )
+# tmpdf<-tmpdf[tmp,tmpvars] %>%
+#   data.table
+# 
+# #fix value
+# tmpnum<-str_replace_all(
+#   tmpdf$value,
+#   "c|c\\.|\\s|,|\\*",
+#   ""
+# ) %>% as.numeric
+# tmpdf$value[is.na(tmpnum)] #some additions, fix later
+# tmpdf[is.na(tmpnum),] #all in Rwanda
+# tmpdf$value<-tmpnum
+# 
+# #fix so we get UK also
+# tmp<-tmpdf$countryname%in%c("England and Wales","Scotland")
+# ukdf<-tmpdf[tmp,]
+# ukdf$countryname<-"United Kingdom"
+# ukdf$cowcode<-"200"
+# ukdf<-ukdf[
+#   ,
+#   .(
+#     value=sum(value)
+#   )
+#   ,
+#   by=c(
+#     'cowcode',
+#     'countryname',
+#     'year',
+#     'statistic'
+#   )
+# ]
+# tmpdf<-tmpdf[!tmp,] #drop england/wales & scotland
+# tmpdf<-rbind.fill( #add uk
+#   tmpdf,
+#   ukdf
+# ) %>% data.table
+# 
+# #make sure each is unique
+# tmpdf$decade<-floor(tmpdf$year/10) * 10
+# tmpdf<-tmpdf[
+#   decade==2010
+#   ,
+#   .(
+#     value=mean(value)
+#   )
+#   ,
+#   by=c(
+#     'cowcode',
+#     'countryname',
+#     'decade',
+#     'statistic'
+#   )
+# ]
+# tmpdf<-spread(
+#   tmpdf,
+#   statistic,
+#   value
+# )
+# tmpdf<-tmpdf[complete.cases(tmpdf),]
+# 
+# #add population
+# dir()
+# popdf<-fread(
+#   'mpd2018df.csv'
+# )
+# tmpvars<-c('cowcode','year','population','gdppc')
+# popdf$decade<-floor(popdf$year/10) * 10
+# popdf<-popdf[
+#   decade==2010
+#   ,
+#   .(
+#     pop=mean(population,na.rm=T),
+#     gdppc=mean(gdppc,na.rm=T)
+#   )
+#   ,
+#   by=c(
+#     'cowcode',
+#     'countryname',
+#     'decade'
+#   )
+# ]
+# tmpvars<-c('cowcode','decade','pop','gdppc')
+# popdf<-popdf[,tmpvars,with=F]
+# 
+# #merge
+# tmpdf<-merge(
+#   tmpdf,
+#   popdf,
+#   both=T
+# )
+# 
+# #fix countrynames
+# tmpdf$countryname<-str_replace(
+#   tmpdf$countryname,
+#   "\\s[0-9]{4}\\-[0-9]{4}",
+#   ""
+# )
+# tmp<-tmpdf$countryname=="United States of America"
+# tmpdf$countryname[tmp]<-"USA"
+# 
+# #add spending for some oced countries
+# setwd(prelimdir); dir()
+# spdf <- fread(
+#   'oecd_govspending_2017.csv'
+# )
+# tmp<-spdf$countryname=="Slovak Republic"
+# spdf$countryname[tmp]<-"Slovakia"
+# tmp<-spdf$countryname=="United States"
+# spdf$countryname[tmp]<-"USA"
+# tmpsubjects<-c("TOT","PUBORD","SOCPROT","HEALTH","EDU")
+# spdf<-spdf[
+#   time==2017 & 
+#     measure=="value" & 
+#     subject%in%tmpsubjects &
+#     advanced
+#   ,
+#   ]
+# spdf<-spread(
+#   spdf,
+#   subject,
+#   value
+# ) %>% data.table
+# names(spdf)<-tolower(names(spdf))
+# spdf$ratio_sp<-(spdf$edu + spdf$health + spdf$socprot)/spdf$pubord
+# keepvars<-c(
+#   "countryname",
+#   "ratio_sp"
+# )
+# spdf<-spdf[,keepvars,with=F]
+# spdf$decade<-2010
+# 
+# fulldf<-merge(
+#   tmpdf,
+#   spdf,
+#   by=c(
+#     'countryname',
+#     'decade'
+#   ),
+#   all.x=T
+# )
+# 
+# #make vars
+# fulldf$pop <- fulldf$pop*10^3
+# fulldf$homicides <- fulldf$homicides * fulldf$pop/10^5
+# fulldf$policeperhom <- log(fulldf$police/fulldf$homicides)
+# fulldf$prisonersperhom <- log(fulldf$prisoners/fulldf$homicides)
+# fulldf$policepercap <- log(fulldf$police/fulldf$pop)
+# fulldf$prisonerspercap <- log(fulldf$prisoners/fulldf$pop)
+# 
+# #quick browse of advanced countries only
+# tmp<-complete.cases(fulldf)
+# fulldf<-fulldf[tmp,]
+# fulldf
+# fulldf$policeperhom <- exp(fulldf$policeperhom)
+# fulldf$prisonersperhom <- exp(fulldf$prisonersperhom)
+# fulldf$policepercap <- exp(fulldf$policepercap)*10^5
+# 
+# fulldf$policepercap[fulldf$cowcode==2]
+# mean(fulldf$policepercap[fulldf$cowcode!=2])
+# fulldf$policeperhom[fulldf$cowcode==2]
+# mean(fulldf$policeperhom[fulldf$cowcode!=2])
+# fulldf$prisonersperhom[fulldf$cowcode==2]
+# mean(fulldf$prisonersperhom[fulldf$cowcode!=2])
+# 
+# 
+# #########################################################
+# #########################################################
+# 
+# #POLICE VS. PRISONS
+# 
+# plotdf<-fulldf
+# bigcountries <- plotdf$pop > quantile(plotdf$pop,0.5)
+# plotdf<-plotdf[bigcountries,]
+# 
+# #standardize in this sample
+# vars<-c('policeperhom','prisonersperhom','policepercap','prisonerspercap')
+# for(v in vars) {
+#   plotdf[[v]] <- scale(plotdf[[v]])[,1]
+# }
+# 
+# #gather, percap,perhom separately
+# plotdf<-gather_(
+#   plotdf,
+#   "var",
+#   "val",
+#   vars
+# )
+# tmp<-str_detect(plotdf$var,"perhom")
+# plotdf$group<-"percap"
+# plotdf$group[tmp]<-"perhom"
+# plotdf$var<-str_extract(plotdf$var,"police|prisoners")
+# plotdf<-spread(
+#   plotdf,
+#   var,
+#   val
+# )
+# 
+# plotdf$usa<-factor(
+#   plotdf$cowcode==2,
+#   c(T,F)
+# )
+# tmpcolors<-c('red','black')
+# tmpsizes<-c(4,2)
+# names(tmpsizes)<-names(tmpcolors)<-c(T,F)
+# 
+# plotdf$group<-factor(
+#   plotdf$group,
+#   c('percap','perhom'),
+#   c('...capita','...homicide')
+# )
+# 
+# g.tmp <- ggplot(
+#   plotdf,
+#   aes(
+#     x=prisoners,
+#     y=police,
+#     label=countryname,
+#     color=usa,
+#     size=usa
+#   )
+# ) +
+#   geom_text(
+#     fontface='bold',
+#     #size=2
+#   ) +
+#   geom_hline(yintercept=0) +
+#   geom_vline(xintercept=0) +
+#   scale_color_manual(
+#     values=tmpcolors,
+#     guide=F
+#   ) +
+#   scale_size_manual(
+#     values=tmpsizes,
+#     guide=F
+#   ) +
+#   stat_smooth(
+#     size=0.5,
+#     method='lm',
+#     alpha=0.05,
+#     linetype='dashed'
+#   ) +
+#   xlab("\nPrisoners per... (log)") +
+#   ylab("Police per... (log)\n") +
+#   facet_wrap(
+#     ~ group
+#   ) +
+#   theme_bw() +
+#   theme(
+#     #axis.line=element_blank(),
+#     axis.text.x=element_blank(),
+#     axis.text.y=element_blank(),
+#     axis.ticks=element_blank(),
+#     #axis.title.x=element_blank(),
+#     #axis.title.y=element_blank(),
+#     legend.position="none",
+#     panel.background=element_blank(),
+#     panel.border=element_blank(),
+#     panel.grid.major=element_blank(),
+#     panel.grid.minor=element_blank(),
+#     plot.background=element_blank()
+#   )
+# 
+# 
+# tmpname<-"fig_policevsprisons.png"
+# setwd(outputdir)
+# ggsave(
+#   plot=g.tmp,
+#   filename=tmpname,
+#   width=10,
+#   height=4
+# )
+# gs.list[[tmpname]]<-list(
+#   graph=g.tmp,
+#   filename=tmpname,
+#   width=10,
+#   height=4
+# )
+# output(plotdf,tmpname,g.tmp)
+# 
+# 
+# #########################################################
+# #########################################################
+# 
+# #AMERICAN EXCEPTIONALISM
+# 
+# plotdf<-fulldf
+# tmp<-complete.cases(plotdf)
+# plotdf<-plotdf[tmp,]
+# 
+# #police vs. prisons
+# plotdf$prizpolratio <- plotdf$police/plotdf$prisoners
+# #plotdf$prizpolratio <- scale(plotdf$prizpolratio)[,1]
+# 
+# 
+# 
+# #social penal
+# plotdf$spratio <- plotdf$ratio_sp
+# #plotdf$spratio <- scale(plotdf$ratio_sp)[,1]
+# 
+# plotdf<-plotdf[,c('countryname','cowcode','prizpolratio','spratio'),with=F]
+# plotdf<-gather(
+#   plotdf,
+#   var,
+#   val,
+#   prizpolratio:spratio
+# )
+# plotdf$usa<-factor(
+#   plotdf$cowcode==2,
+#   c(T,F)
+# )
+# tmpcolors<-c('red','grey')
+# tmpsizes<-c(4,2)
+# names(tmpsizes)<-names(tmpcolors)<-c(T,F)
+# 
+# tmporder<-order(plotdf$val[plotdf$var=="prizpolratio"])
+# tmplevels <- plotdf$countryname[plotdf$var=="prizpolratio"][tmporder]
+# plotdf$countryname <- factor(
+#   plotdf$countryname,
+#   tmplevels
+# )
+# 
+# tmplevels<-c(
+#   'prizpolratio',
+#   'spratio'
+# )
+# tmplabels<-c(
+#   "Police / Prisoners",
+#   "Social Spending / Penal Spending"
+# )
+# plotdf$var <- factor(
+#   plotdf$var,
+#   tmplevels,
+#   tmplabels
+# )
+# 
+# g.tmp <- ggplot(
+#   plotdf,
+#   aes(
+#     x=countryname,
+#     y=val,
+#     fill=usa
+#   )
+# ) +
+#   geom_bar(
+#     stat='identity',
+#     color='black',
+#     width=0.75
+#     ) + 
+#   scale_fill_manual(
+#     values=tmpcolors,
+#     guide=F
+#   ) +
+#   facet_wrap(
+#     ~ var,
+#     scales = 'free_x'
+#   ) +
+#   coord_flip() +
+#   ylab("") +
+#   xlab("") +
+#   theme_bw()
+# 
+# tmpname<-"fig_exceptionalism.png"
+# setwd(outputdir)
+# ggsave(
+#   plot=g.tmp,
+#   filename=tmpname,
+#   width=10,
+#   height=5
+# )
+# gs.list[[tmpname]]<-list(
+#   graph=g.tmp,
+#   filename=tmpname,
+#   width=10,
+#   height=5
+# )
+# output(plotdf,tmpname,g.tmp)
 
+
+#########################################################
+#########################################################
+
+# #OUTPUT
+# #output graphlist
+# setwd(outputdir)
+# this.sequence<-seq_along(gs.list)
+# for(i in this.sequence) {
+#   print(
+#     paste0(
+#       "saving ",i," of ",length(this.sequence)
+#     )
+#   )
+#   thiselement<-gs.list[[i]]
+#   ggsave(
+#     #filename="tmp.pdf",
+#     filename=thiselement$filename,
+#     plot=thiselement$graph,
+#     width=thiselement$width,
+#     height=thiselement$height
+#   )
+#   # #embed font
+#   # embed_fonts(
+#   #   file="tmp.pdf",
+#   #   outfile=thiselement$filename
+#   # )
+#   # file.remove(
+#   #   "tmp.pdf"
+#   # )
+#   #Sys.sleep(0.5)
+# }
+# 
 

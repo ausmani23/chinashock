@@ -4,8 +4,8 @@ D.property_crt,Property Crime Rate (UCR),2,dv
 D.pcrt_fs,Property Crime Rate (FS),3,dv
 D.violent_crt,Violent Crime Rate (UCR),4,dv
 D.vcrt_fs,Violent Crime Rate (FS),5,dv
-D.emptopop,Decline in Emp-to-Pop (CBP),6,endogenous
-D.emptopopc,Decline in Emp-to-Pop (IPUMS),7,endogenous
+D.emptopop,Decline in Emp-to-Pop (CBP),7,endogenous
+D.emptopopc,Decline in Emp-to-Pop (IPUMS),6,endogenous
 D.manushare,Decline in Manufacturing Share,8,endogenous
 D.unemprate,Increase in Unemployment Rate,9,endogenous
 usch,China Shock,10,endogenous
@@ -22,3 +22,5 @@ unemprate,Unemployment Rate (\%),20,speriod
 l_sh_empl_f,Female Emp. Share (\%),21,speriod
 l_task_outsource,Offshorability Index,22,speriod
 l_sh_routine33,Routine Occupations (\%),23,speriod
+genx_noncoll,Gen X Non-College Share (\%),24,speriod
+genx_hsdrop,Gen X HS Dropout Share (\%),25,speriod

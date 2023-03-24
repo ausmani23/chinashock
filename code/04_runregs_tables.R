@@ -82,12 +82,13 @@ regtables[['unemp']]<-c(
 
 #these will have to be identified by their model 'i'
 tmp<-finaldf$prefmods |
+  finaldf$endogenous%in%c('manuf_china','unemp_china') |
   finaldf$instrumented%in%c("ols")
 regdf<-finaldf[tmp,]
 tmpdf<-regdf[,c("i","instrumented","endogenous")] %>% unique
 tmpdf$endogenous<-factor(
   tmpdf$endogenous,
-  c("emptopop_china","emptopopc_china","manuf_china","unemp_china")
+  c("emptopopc_china","emptopop_china","manuf_china","unemp_china")
 )
 tmpdf$instrumented<-factor(
   tmpdf$instrumented,
@@ -248,6 +249,10 @@ for(j in tmpseq.j) {
     myfinaldf<-finaldf[tmp,]
     N.czs<-myfinaldf$N.czs %>% unique
     N.obs<-myfinaldf$N %>% unique
+    r2<-myfinaldf$r2 %>% unique %>%
+      round(2) %>% format(nsmall=2)
+    adjr2<-myfinaldf$adjr2 %>% unique %>%
+      round(2) %>% format(nsmall=2)
     myinstrumented<-unique(myfinaldf$instrumented)
     if(myinstrumented=="instrumented") {
       est.method<-"2SLS"
@@ -273,7 +278,9 @@ for(j in tmpseq.j) {
         N.obs,
         divisionfe,
         periodfe,
-        fstat
+        fstat,
+        r2,
+        adjr2
       ),
       stringsAsFactors = F
     )
@@ -285,9 +292,11 @@ for(j in tmpseq.j) {
     "Method",
     "Commuting Zones",
     "Observations",
-    "Period-Level",
     "State-Level",
-    "First-Stage F-Statistic"
+    "Period-Level",
+    "First-Stage F-Statistic",
+    'R^2',
+    "Adjusted-R^2"
   )
   
   #######################################

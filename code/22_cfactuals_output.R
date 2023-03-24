@@ -32,6 +32,10 @@ sumstatsdf<-read.csv(
   'sumstatsdf.csv',
   stringsAsFactors=F
 )
+sumstatsdf2<-read.csv(
+  'sumstatsdf2.csv',
+  stringsAsFactors=F
+)
 
 #load a function to get prettynames
 setwd(codedir); dir()
@@ -47,16 +51,16 @@ require(ggthemes)
 require(extrafont)
 require(RColorBrewer)
 require(scales)
-#load fonts
-loadfonts(quiet=T) #register w/ pdf
-loadfonts(device = "win",quiet=T) #register w/ windows
-#fonts()
-#ghostscript
-Sys.setenv(
-  R_GSCMD = gsdir_full
-)
-#initialize graphlist
-gs.list<-list()
+# #load fonts
+# loadfonts(quiet=T) #register w/ pdf
+# loadfonts(device = "win",quiet=T) #register w/ windows
+# #fonts()
+# #ghostscript
+# Sys.setenv(
+#   R_GSCMD = gsdir_full
+# )
+# #initialize graphlist
+# gs.list<-list()
 
 #quick function to outputdfs
 output <- function(df,tmpname,fig=NULL) {
@@ -91,7 +95,7 @@ output <- function(df,tmpname,fig=NULL) {
 #PLOT RAW RATES
 #in cfactual scenarios
 
-tmp<-sumratedf$cz90=="average" & 
+tmp<-sumratedf$cz90=='average' & 
   sumratedf$cfactual%in%c(
     "observed",
     "predicted",
@@ -102,8 +106,9 @@ tmp<-sumratedf$cz90=="average" &
     "90spreserved"#,
     #"highptile"
   ) &
-  sumratedf$endogenous%in%c("emptopop_china")
-plotdf<-sumratedf[tmp,]
+  sumratedf$endogenous%in%c("emptopopc_china")
+plotdf<-sumratedf[tmp,] 
+
 
 #edits
 plotdf$year<-as.numeric(plotdf$year)
@@ -186,14 +191,22 @@ g.tmp<-ggplot(
     legend.position = 'bottom'
   )
 
-tmpname<-"fig_cfactuals_rates.pdf"
-gs.list[[tmpname]]<-list(
-  graph=g.tmp,
+setwd(outputdir)
+tmpname<-"fig_cfactuals_rates.png"
+ggsave(
+  plot=g.tmp,
   filename=tmpname,
   width=8,
   height=6
 )
-output(plotdf,tmpname,g.tmp)
+
+# gs.list[[tmpname]]<-list(
+#   graph=g.tmp,
+#   filename=tmpname,
+#   width=8,
+#   height=6
+# )
+output(plotdf,tmpname)
 
 #get actual rates; start, peak and end
 plotdf<-data.table(plotdf)
@@ -210,6 +223,9 @@ plotdf[
     'cfactual'
   )
 ]
+
+#get change in rates
+sumstatsdf
 
 #########################################################
 #########################################################
@@ -348,35 +364,35 @@ plotdf[
 #########################################################
 #########################################################
 
-#OUTPUT
-#output graphlist
-setwd(outputdir)
-this.sequence<-seq_along(gs.list)
-for(i in this.sequence) {
-  print(
-    paste0(
-      "saving ",i," of ",length(this.sequence)
-    )
-  )
-  thiselement<-gs.list[[i]]
-  ggsave(
-    filename="tmp.pdf",
-    plot=thiselement$graph,
-    width=thiselement$width,
-    height=thiselement$height
-  )
-  #embed font
-  embed_fonts(
-    file="tmp.pdf",
-    outfile=thiselement$filename
-  )
-  file.remove(
-    "tmp.pdf"
-  )
-  Sys.sleep(0.5)
-}
-
-
+# #OUTPUT
+# #output graphlist
+# setwd(outputdir)
+# this.sequence<-seq_along(gs.list)
+# for(i in this.sequence) {
+#   print(
+#     paste0(
+#       "saving ",i," of ",length(this.sequence)
+#     )
+#   )
+#   thiselement<-gs.list[[i]]
+#   ggsave(
+#     filename="tmp.pdf",
+#     plot=thiselement$graph,
+#     width=thiselement$width,
+#     height=thiselement$height
+#   )
+#   #embed font
+#   embed_fonts(
+#     file="tmp.pdf",
+#     outfile=thiselement$filename
+#   )
+#   file.remove(
+#     "tmp.pdf"
+#   )
+#   Sys.sleep(0.5)
+# }
+# 
+# 
 
 
 

@@ -79,7 +79,6 @@ tmpdf<-data.frame(
   endogenous="D.emptopopc",
   stringsAsFactors=F
 )
-
 ends <- c(
   "D.manushare",
   "D.emptopop",
@@ -121,14 +120,33 @@ tmpoutput<-lapply(tmpseq.i,function(i) {
 
 ivs_list<-lapply(tmpoutput,function(x) x$strategy)
 names(ivs_list)<-sapply(tmpoutput,function(x) x$name)
+
+#add extrat
 extra_list<-list(
+  #autor instrument, chna spec
   china=list(
     end="usch",
     iv="otch"
   ),
+  #feler and senses instrument, standard
   china_alt=list(
     end="d_tradeusch_pw",
     iv="d_tradeotch_pw_lag"
+  ),
+  #feler and senses instrument w emptopop
+  emptopop_china_alt=list(
+    end="D.emptopop",
+    iv="d_tradeotch_pw_lag"
+  ),
+  #black employment to population ratio
+  emptopopc_black_china=list(
+    end="D.emptopopc_black",
+    iv="otch"
+  ),
+  #white employment to population ratio
+  emptopopc_white_china=list(
+    end="D.emptopopc_white",
+    iv="otch"
   )
 )
 ivs_list<-append(
@@ -139,9 +157,9 @@ ivs_list<-append(
 #name this for next step
 endogenous<-names(ivs_list)
 tmp<-endogenous%in%c(
-  "manuf_china",
+  #"manuf_china",
   "emptopopc_china",
-  "unemp_china",
+  #"unemp_china",
   "emptopop_china"
 )
 names(endogenous)[tmp]<-"preferred"
@@ -194,19 +212,17 @@ tmpdvs<-c(
   "D.courtshare"
 )
 
-#get the vera vars
+#pick out the vera vars
 tmp<-str_detect(
   names(covarsdf),
-  "corrected"
-) & 
-  #no need for the 06/19 vintage
-  !str_detect(
-    names(covarsdf),"1906"
-  ) &
+  'corrected'
+)
+tmp<-tmp & 
   #no need for log versions here
+  #this happens via logdv==T or F
   !str_detect(
     names(covarsdf),"ln"
-  )
+  ) 
 redodvs<-names(covarsdf)[tmp]
 redodvs<-paste0("D.",redodvs)
 
@@ -245,7 +261,11 @@ modslist<-list(
     #"dpfe",
     "spfe",
     preferred="preferred",
-    "czfe"
+    "czfe",
+    "extracontrols"
+    #,
+    #"reviewer1",
+    #"reviewer1_alt"
   ),
   restriction=c(
     preferred="unrestricted",
@@ -372,6 +392,42 @@ runmodsdf<-rbind(
 
 #ADJUST/ADD MODELS
 
+#add ols for the other vars
+#and for the race vars
+endogvars<-c(
+  'unemp_china',
+  'manuf_china',
+  'emptopopc_china',
+  'emptopop_china'
+)
+endogvars_prefmods <- 
+  runmodsdf$endogenous[runmodsdf$prefmods==T] %>% unique
+endogvars<-endogvars[!endogvars%in%endogvars_prefmods]
+tmp<-runmodsdf$endogenous%in%c(endogvars)
+newrow<-runmodsdf[tmp,]
+newrow$instrumented<-'ols'
+runmodsdf<-rbind.fill(
+  newrow,
+  runmodsdf
+)
+
+#with race-specific emptop ratio, 
+#we want the race-speciifc incarceration rate
+tmp<-runmodsdf$endogenous=='emptopopc_black_china'
+runmodsdf$dv[tmp]<-'D.incRate_black_corrected_estimated_25'
+tmp<-runmodsdf$endogenous=='emptopopc_white_china'
+runmodsdf$dv[tmp]<-'D.incRate_white_corrected_estimated_25'
+
+#add ols verions of the race dvs
+tmp<-str_detect(runmodsdf$dv,'D.incRate_(black|white|latinx|aapi|native)_corrected_estimated_25') &
+  runmodsdf$endogenous%in%endogvars_prefmods
+newrow<-runmodsdf[tmp,]
+newrow$instrumented<-'ols'
+runmodsdf<-rbind.fill(
+  newrow,
+  runmodsdf
+)
+
 #no point doing dv manushare/emptopop/unemprate
 #with the manushare/emptopop endogenous
 #do china and china_alt, instead
@@ -384,13 +440,13 @@ tmp<-runmodsdf$dv%in%c(
 runmodsdf$endogenous[tmp & runmodsdf$endogenous=="unemp_china"]<-"china"
 
 #fs data can't be used w/ stacked.long
-tmp<-runmodsdf$endogenous=="china_alt"
+tmp<-runmodsdf$endogenous%in%c("china_alt","emptopop_china_alt")
 tmp<-tmp | runmodsdf$dv%in%c(
   "D.vcrt_fs",
   "D.pcrt_fs"
 )
 runmodsdf$period[tmp]<-"stacked" #b/c no 2011 data
-runmodsdf$logdv[tmp]<-F
+runmodsdf$logdv[tmp]<-F #no longer logged
 
 #our crime vars
 #shouldn't be estimated
@@ -400,7 +456,42 @@ tmp<-str_detect(
   "\\_crt$"
 )
 runmodsdf$latestart[tmp]<-"latestart"
-runmodsdf$logdv[tmp]<-F #not logged, b/c of zero's
+runmodsdf$logdv[tmp]<-F 
+
+#add logged models for crime
+#this is what Feler and Senses (2017) choose to do
+newrow<-runmodsdf[str_detect(runmodsdf$dv,'\\_crt$|crt\\_fs'),]
+newrow$logdv<-T
+runmodsdf<-rbind.fill(
+  runmodsdf,
+  newrow
+)
+
+#also add stacked models for non FS crime
+#since this is more directly comparable to FS
+newrow<-runmodsdf[str_detect(runmodsdf$dv,'\\_crt$'),]
+newrow$logdv<-T
+newrow$period<-'stacked'
+runmodsdf<-rbind.fill(
+  runmodsdf,
+  newrow
+)
+
+#add a Feler and Senses specification
+#with their original strategy
+#this shoudl replicate their results
+tmp<-runmodsdf$dv%in%c(
+  "D.vcrt_fs",
+  "D.pcrt_fs"
+)
+newrow<-runmodsdf[tmp,]
+newrow$endogenous<-NULL
+newrow<-unique(newrow)
+newrow$endogenous<-'china_alt'
+runmodsdf<-rbind.fill(
+  runmodsdf,
+  newrow
+)
 
 #my default choice for robustness check
 #with decadal rates will be one where i inflate both
@@ -422,6 +513,11 @@ runmodsdf$logdv[tmp]<-F
 
 #########
 
+#in case I've put dups in here
+runmodsdf <- unique(runmodsdf)
+
+#########
+
 #get indices
 runmodsdf$i<-1:nrow(runmodsdf)
 print(nrow(runmodsdf))
@@ -431,7 +527,14 @@ roworder<-runmodsdf$i
 runmodsdf<-runmodsdf[roworder,]
 row.names(runmodsdf)<-NULL
 
+#########
+
 #trimming?
+# tmp<-runmodsdf$prefmods==T
+# runmodsdf<-runmodsdf[tmp,]
+
+#########
+
 runmodsdf$i<-1:nrow(runmodsdf)
 
 #########################################################
@@ -445,11 +548,11 @@ tmpseq.i<-1:nrow(runmodsdf)
 fulloutput<-lapply(tmpseq.i,function(i) {
   
   #i<-which(runmodsdf$dropoutliers=="winsorize")
-  #i<-2
+  #i<-84
   
   print(
     paste(
-      i,"of",length(tmpseq.i)
+      i,"of",max(tmpseq.i)
     )
   )
   
@@ -660,7 +763,6 @@ fulloutput<-lapply(tmpseq.i,function(i) {
   
   #merge all of these together
   #to produce regdf
-  
   intersect(
     names(mydvdf),
     names(myshockdf)
@@ -715,7 +817,7 @@ fulloutput<-lapply(tmpseq.i,function(i) {
     rfe<-"factor(division) +"
   } else if( thismodel%in%c("simple","periodfe") ) {
     rfe<-""
-  } else if(thismodel%in%c("preferred","statefe","spfe") ) {
+  } else if(thismodel%in%c("preferred","statefe","spfe","reviewer1","reviewer1_alt","extracontrols") ) {
     rfe<-"factor(state_fips) +"
   } else if(thismodel=="czfe") {
     rfe<-"factor(cz90) +"
@@ -751,7 +853,7 @@ fulloutput<-lapply(tmpseq.i,function(i) {
     "^D\\.",""
   )
   
-  if( thismodel%in%c("simple","divisionfe","statefe","periodfe","dpfe","spfe") ) {
+  if( thismodel%in%c("simple","divisionfe","periodfe","dpfe","spfe") ) {
     controls<-""
   } else if( thismodel%in%c("preferred","statefe","czfe") ) {
     list_controls<-c(
@@ -759,6 +861,7 @@ fulloutput<-lapply(tmpseq.i,function(i) {
       #that are correlated w/ shock,
       #AND which could epxlain inc
       #through a non-LM pathway
+      "genx_noncoll", #if CZs with lots of non-college educated Gen X's were hit
       "blackpop_pct", #if more black CZs were targeted
       "l_sh_popfborn", #if foreigner-heavy CZs were targeted
       dv_control #if high-inc CZs were targeted
@@ -770,20 +873,54 @@ fulloutput<-lapply(tmpseq.i,function(i) {
     controls<-paste0(
       controls," + "
     )
-    #DEPRECATED THE 'FULL' MODEL, B/C POST-TREATMENT BIAS
-  # } else if ( thismodel%in%c("statefe","czfe") ) {
-  #   list_controls<-c(
-  #     "blackpop_pct",
-  #     "l_sh_popfborn",
-  #     dv_control
-  #   ) %>% unique
-  #   controls<-paste0(
-  #     list_controls,
-  #     collapse=" + "
-  #   )
-  #   controls<-paste0(
-  #     controls," + "
-  #   )
+  } else if ( thismodel%in%c('reviewer1') ) {
+    list_controls<-c(
+      #"genx_noncoll", #for comaprison
+      "blackpop_pct", 
+      "l_sh_popfborn", 
+      dv_control 
+    ) %>% unique
+    controls<-paste0(
+      list_controls,
+      collapse=" + "
+    )
+    controls<-paste0(
+      controls," + "
+    )
+  } else if ( thismodel%in%c('reviewer1_alt') ) {
+    list_controls<-c(
+      "cgen_noncoll",
+      "blackpop_pct", 
+      "l_sh_popfborn", 
+      dv_control 
+    ) %>% unique
+    controls<-paste0(
+      list_controls,
+      collapse=" + "
+    )
+    controls<-paste0(
+      controls," + "
+    )
+  } else if ( thismodel=='extracontrols') {
+    list_controls<-c(
+      #include all controls
+      #including those that lie on the path
+      "genx_noncoll", #if CZs with lots of non-college educated Gen X's were hit
+      "blackpop_pct", #if more black CZs were targeted
+      "l_sh_popfborn", #if foreigner-heavy CZs were targeted
+      "manushare", #manu share
+      "l_sh_routine33", #routinized
+      "l_task_outsource", #outsourceable
+      dv_control #if high-inc CZs were targeted
+    ) %>% unique
+    controls<-paste0(
+      list_controls,
+      collapse=" + "
+    )
+    controls<-paste0(
+      controls," + "
+    )
+
   } else {
     print( thismodel )
     stop('invalid spec choice')
@@ -823,9 +960,17 @@ fulloutput<-lapply(tmpseq.i,function(i) {
     print(tmpcols[!tmp])
     stop()
   }
-  tmprows<-complete.cases(thisdf[,tmpcols]) &
-    is.finite(thisdf$val)
-  thisdf<-thisdf[tmprows,tmpcols]
+  #trim to complete cases 
+  tmprows<-complete.cases(thisdf[,tmpcols])
+  #and to finite values of non-ID vars in the formula
+  finitevars<-c(
+    all.vars(thisform),
+    shockvars
+  ) %>% unique
+  finitevars<-finitevars[!finitevars%in%c('periodf',idvars)]
+  tmprows2<-lapply(thisdf[,finitevars],is.finite) %>%
+    Reduce(f="&")
+  thisdf<-thisdf[tmprows & tmprows2,tmpcols]
   
   #########
   
@@ -1100,7 +1245,7 @@ names(fulloutput)<-tmpseq.i
 #retrieve coefficients
 tmpseq.i<-seq_along(fulloutput)
 estsdf<-lapply(tmpseq.i,function(i) {
-  #i<-119
+  #i<-1
   #print(i)
   
   tmpdfs<-list()
@@ -1185,11 +1330,13 @@ deetsdf<-lapply(tmpseq.i,function(i) {
   N.czs<-fulloutput[[i]]$df$cz90 %>%
     unique %>% length
   tmpsum<-summary(m.tmp)
+  r2<-tmpsum$r.squared
   adjr2<-tmpsum$adj.r.squared
   tmpdf<-data.frame(
     N,
     N.czs,
-    adjr2#
+    r2,
+    adjr2
   )
   tmpdf$i<-i
   tmpdf
@@ -1251,6 +1398,25 @@ finaldf$mu.sd.max <- finaldf$mu.sd + 1.96 * finaldf$se.sd
 #########################################################
 
 #OUTPUT
+# stop('not running whole thing rn')
+# setwd(filesdir)
+# saveRDS(
+#   fulloutput,
+#   'tmpoutput.RDS'
+# )
+# write.csv(
+#   finaldf,
+#   'tmpresults.csv',
+#   row.names=F
+# )
+
+#save regresults
+setwd(filesdir)
+write.csv(
+  finaldf,
+  'regresults.csv',
+  row.names=F
+)
 
 #########################################################
 #########################################################
@@ -1285,21 +1451,10 @@ saveRDS(
 )
 rm(fulloutput)
 
-#########################################################
-#########################################################
-
 #save image w/o fulloutput
 #this saves time/space;
 #unless I explicitly need fulloutput,
 #'03_estimated.RData' won't load it
-
-#save regresults
-setwd(filesdir)
-write.csv(
-  finaldf,
-  'regresults.csv',
-  row.names=F
-)
 
 #save image
 setwd(filesdir)
