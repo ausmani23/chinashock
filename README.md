@@ -1,6 +1,6 @@
-# Job Loss and Incarceration: Local Labor Market Effects of a Natural Experiment
+# Labor Markets and Incarceration: Effects of the China Shock on American Punishment
 
-This repository contains replication materials for "Job Loss and Incarceration: Local Labor Market Effects of a Natural Experiment". 
+This repository contains replication materials for "Labor Markets and Incarceration: Effects of the China Shock on American Punishment". 
 
 ## FOLDERS
 
@@ -18,6 +18,7 @@ This repository contains replication materials for "Job Loss and Incarceration: 
 + **20_cfactuals.R** / runs counterfactual
 + **21_cfactuals_rates.R** / converts counterfactual output to annual rates
 + **22_cfactuals_output.R** / output figures based on cfactual results
++ **40_felersenses.R** / explains differences in result from Feler and Senses (2017)
 + **99_figures.R** / outputs .tex fragment for figures
 + **99_tables.R** / outputs .tex fragment for tables
 + **footnotes.R** / adds footnotes to figures/tables
