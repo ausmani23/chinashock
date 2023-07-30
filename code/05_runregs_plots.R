@@ -23,9 +23,15 @@ setwd(codedir); dir()
 source('dirs.R')
 source('functions.R')
 
-#load RData
+#load RData 
 setwd(filesdir); dir()
+xdir<-getwd()
 load("03_estimated.RData")
+setwd(xdir); setwd('..')
+rootdir <- getwd()
+codedir<-file.path(rootdir,"code")
+setwd(codedir); dir()
+source('dirs.R')
 
 #load a function to get prettynames
 setwd(thiscompdir)
@@ -181,8 +187,6 @@ finaldf[
   c('endogenous','mu.sd')
 ]
 
-
-
 finaldf[
   finaldf$dv=='D.violent_crt' & 
     finaldf$var%in%c('D.emptopopc','D.emptopop'),
@@ -323,6 +327,7 @@ tmp<-tmp & finaldf$var%in%c(
   "D.emptopopc",
   "D.unemprate"
 )
+tmp<-tmp & finaldf$dv=="D.incRate_corrected_estimated_25"
 plotdf<-finaldf[tmp,]
 
 tmplevels<-c(
@@ -442,21 +447,23 @@ tmpvars<-c(
   "D.officers",
   "D.employees",
   ##spending
-  ##(remove share variables, which don't add anything)
   "D.rev",
+  #total
   "D.spend",
   "D.policespend",
-  #"D.policeshare",
   "D.jailspend",
-  #"D.jailshare",
   "D.courtspend",
-  #"D.courtshare",
   "D.eduspend",
-  #"D.edushare",
   "D.welfspend",
-  #"D.welfshare",
-  "D.healthspend"
-  #"D.healthshare"
+  "D.healthspend",
+  # #direct
+  # "D.spend_d",
+  # "D.policespend_d",
+  # "D.jailspend_d",
+  # "D.courtspend_d",
+  # "D.eduspend_d",
+  # "D.welfspend_d",
+  # "D.healthspend_d"
 )
 tmp<-(
   finaldf$dv%in%tmpvars |
@@ -466,9 +473,17 @@ tmp<-(
 tmp<- tmp & 
   #limit the crime vars to exclude the non-log specification
   !(str_detect(finaldf$dv,"crt") & (finaldf$logdv==F | finaldf$period=='stacked'))
+tmp<- tmp & 
+  #limit the spend variables to exclud non-log
+  !(str_detect(finaldf$dv,"spend") & finaldf$logdv==F)
 plotdf<-finaldf[tmp,]
 
-plotdf[plotdf$dv=='D.property_crt',]
+#examine spending on welfare, etc.
+tmp<-str_detect(finaldf$dv,'welfspend|healthspend') &
+  finaldf$stage=='secondstage' &
+  finaldf$endogenous=="emptopopc_china" & 
+  finaldf$var%in%c("D.emptopopc","otch") 
+finaldf[tmp,c('dv','logdv','mu.sd','mu.sd.min','mu.sd.max','pval','pval.shp')]
 
 
 #sort into facets
@@ -478,20 +493,24 @@ plotdf$facet[tmp]<-"Punishment"
 tmp<-plotdf$dv%in%c("D.officers","D.employees")
 plotdf$facet[tmp]<-"Policing"
 tmp<-plotdf$dv%in%c(
+  ##spending
   "D.rev",
+  #total
   "D.spend",
   "D.policespend",
-  #"D.policeshare",
   "D.jailspend",
-  #"D.jailshare",
   "D.courtspend",
-  #"D.courtshare",
   "D.eduspend",
-  #"D.edushare",
   "D.welfspend",
-  #"D.welfshare",
-  "D.healthspend"
-  #"D.healthshare"
+  "D.healthspend",
+  #direct
+  "D.spend_d",
+  "D.policespend_d",
+  "D.jailspend_d",
+  "D.courtspend_d",
+  "D.eduspend_d",
+  "D.welfspend_d",
+  "D.healthspend_d"
 )
 plotdf$facet[tmp]<-"Spending"
 tmplevels<-c(
@@ -524,22 +543,24 @@ tmplevels<-c(
   ###
   "D.officers",
   "D.employees",
-  ###
+  ##spending
   "D.rev",
+  #total
   "D.spend",
   "D.policespend",
-  #"D.policeshare",
   "D.jailspend",
-  #"D.jailshare",
   "D.courtspend",
-  #"D.courtshare",
   "D.eduspend",
-  #"D.edushare",
   "D.welfspend",
-  #"D.welfshare",
-  "D.healthspend"
-  #"D.healthshare"
-  ##
+  "D.healthspend",
+  #direct
+  "D.spend_d",
+  "D.policespend_d",
+  "D.jailspend_d",
+  "D.courtspend_d",
+  "D.eduspend_d",
+  "D.welfspend_d",
+  "D.healthspend_d"
 ) %>% rev
 tmplabels<-c(
   "Property Crime",
@@ -563,17 +584,19 @@ tmplabels<-c(
   "Local Revenue",
   "Local Spending",
   "Police Spending",
-  #"Police Share",
   "Jail Spending",
-  #"Jail Share",
   "Court Spending",
-  #"Court Share",
   "Education Spending",
-  #"Education Share",
   "Welfare Spending",
-  #"Welfare Share",
-  "Health Spending"
-  #"Health Share"
+  "Health Spending",
+  ###
+  "Local Spending (Direct)",
+  "Police Spending (Direct)",
+  "Jail Spending (Direct)",
+  "Court Spending (Direct)",
+  "Education Spending (Direct)",
+  "Welfare Spending (Direct)",
+  "Health Spending (Direct)"
 ) %>% rev
 plotdf$dv<-factor(
   plotdf$dv,
@@ -611,7 +634,7 @@ g.tmp<-ggplot(
     size=2
   ) +
   geom_errorbar(
-    size=0.4,
+    linewidth=0.4,
     width=0.2
   ) +
   geom_hline(
@@ -659,11 +682,12 @@ output(plotdf,tmpname,g.tmp)
 tmp<-str_detect(
   finaldf$dv,
   'white|black|aapi|native|latinx'
-) &
+) & !str_detect(finaldf$dv,'estimated0')
+
+tmp<-tmp & 
   finaldf$endogenous=="emptopopc_china" & 
   finaldf$var%in%c("D.emptopopc","otch") &
-  finaldf$stage=='secondstage' &
-  !str_detect(finaldf$dv,'estimated0')
+  (finaldf$stage=='secondstage' & !is.na(finaldf$stage))
 plotdf<-finaldf[tmp,]
 
 #get the race and institution from the name
@@ -736,8 +760,8 @@ tmplabels<-c(
 extradf$institution <- factor(extradf$institution,tmplevels,tmplabels)
 
 #limit threshold
-plotdf<-plotdf[plotdf$threshold=="<=75%",]
-extradf<-extradf[extradf$threshold=="<=75%",]
+# plotdf<-plotdf[plotdf$threshold=="<=75%",]
+# extradf<-extradf[extradf$threshold=="<=75%",]
 
 g.tmp<-ggplot(
   plotdf,

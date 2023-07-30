@@ -18,6 +18,7 @@ This repository contains replication materials for "Labor Markets and Incarcerat
 + **20_cfactuals.R** / runs counterfactual
 + **21_cfactuals_rates.R** / converts counterfactual output to annual rates
 + **22_cfactuals_output.R** / output figures based on cfactual results
++ **30_describe.R** / generates descriptive figures
 + **40_felersenses.R** / explains differences in result from Feler and Senses (2017)
 + **99_figures.R** / outputs .tex fragment for figures
 + **99_tables.R** / outputs .tex fragment for tables

@@ -36,16 +36,16 @@ require(ggthemes)
 require(extrafont)
 require(RColorBrewer)
 require(scales)
-#load fonts
-loadfonts(quiet=T) #register w/ pdf
-loadfonts(device = "win",quiet=T) #register w/ windows
-#fonts()
-#ghostscript
-Sys.setenv(
-  R_GSCMD = gsdir_full
-)
-#initialize graphlist
-gs.list<-list()
+# #load fonts
+# loadfonts(quiet=T) #register w/ pdf
+# loadfonts(device = "win",quiet=T) #register w/ windows
+# #fonts()
+# #ghostscript
+# Sys.setenv(
+#   R_GSCMD = gsdir_full
+# )
+# #initialize graphlist
+# gs.list<-list()
 
 #quick function to outputdfs
 output <- function(df,tmpname,fig=NULL) {
@@ -80,10 +80,15 @@ output <- function(df,tmpname,fig=NULL) {
 
 #load prepped dataframes
 setwd(datadir); dir()
+xdir<-getwd()
 load(
   '02_prepped.RData'
 )
-setwd(codedir)
+setwd(xdir); setwd('..')
+rootdir <- getwd()
+codedir<-file.path(rootdir,"code")
+setwd(codedir); dir()
+source('dirs.R')
 source('functions.R')
 
 #########################################################
@@ -276,6 +281,90 @@ ggsave(
 # )
 
 output(plotdf,tmpname)
+
+
+#########################################################
+#########################################################
+
+#PLOT OF DESCRIPTIVE STATISTICS
+
+setwd(filesdir); dir()
+fulloutput<-readRDS('fulloutput.RDS')
+setwd(metadir); dir()
+runmodsdf<-fread('runmodsdf.csv')
+#get just the mods you want, which are the four main ones
+mymodsdf <- runmodsdf[
+  (runmodsdf$prefmods==T) | (
+    runmodsdf$endogenous%in%c('unemp_china','manuf_china') & 
+      runmodsdf$instrumented=='instrumented'
+  ),'i'
+]
+mymods <- fulloutput[mymodsdf$i]
+ddf <-lapply(mymods,function(x) {
+  #x<-mymods[[1]]
+  #get mean and sd of vars in sdsdf
+  returndf <- lapply( x$sdsdf$var,function(y) {
+    if(y=="incRate_corrected_estimated_25_ln")
+      x$df[[y]]<-exp(x$df[[y]])
+    data.frame(
+      var=y,
+      mean=mean( x$df[[y]] ),
+      sd=sd( x$df[[y]] )
+    )
+  }) %>% rbind.fill
+  returndf$var[returndf$var=='val']<-"D.incRate_corrected_estimated_25"
+  returndf$var[returndf$var=='incRate_corrected_estimated_25_ln']<-"incRate_corrected_estimated_25"
+  returndf
+}) %>% rbind.fill %>% unique
+
+ddf$varname<-sapply(
+  ddf$var,
+  getvarname
+)
+ddf$order<-sapply(
+  ddf$var,
+  getvarorder
+)
+ddf$type<-sapply(
+  ddf$var,
+  getvartype
+)
+ddf$isendogenous<-ddf$type=="endogenous"
+
+#make the table
+ddf<-ddf[order(ddf$order),]
+ddf$varname[ddf$var=='D.incRate_corrected_estimated_25']<-'Increase in Incarceration Rate'
+ddf <- ddf[,c('varname','mean','sd')]
+ddf$mean <- ddf$mean %>% round(2) %>% format(nsmall=2)
+ddf$sd <- ddf$sd %>% round(2) %>% format(nsmall=2)
+
+# require(xtable)
+# temptable<-xtable(
+#   ddf,
+#   caption='Descriptive Statistics',
+#   label='tab_descriptive',
+#   align= rep("c",ncol(ddf) + 1 )
+# )
+#print table
+#(note this prints table without styling)
+# setwd(outputdir)
+# print(
+#   temptable,
+#   file='tab_descriptive.tex',
+#   ###optional commands
+#   add.to.row=NULL,
+#   tabular.environment='tabular',
+#   include.colnames=F,
+#   floating=T,
+#   ##preset commands, same for all
+#   append=T,
+#   caption.placement="top",
+#   booktabs=T,
+#   include.rownames=F,
+#   sanitize.text.function=identity
+# )
+
+
 
 #########################################################
 #########################################################
@@ -959,12 +1048,12 @@ tmpdfs<-lapply(tmpseq.i,function(i) {
     thisvar
   )
   tmpdf<-tmpdf[,tmpvars]
-  #if this is manushare or emptopop, 
-  #it will be more intuitive for someone
-  #to read these as chg. in the endogenous variable
-  #rather than as -/+
-  if(thisvar!='D.unemprate')
-    tmpdf[[thisvar]]<- -1 * tmpdf[[thisvar]]
+  # #if this is manushare or emptopop, 
+  # #it will be more intuitive for someone
+  # #to read these as chg. in the endogenous variable
+  # #rather than as -/+
+  # if(thisvar!='D.unemprate')
+  #   tmpdf[[thisvar]]<- -1 * tmpdf[[thisvar]]
   tmpdf
 })
 
@@ -1003,10 +1092,10 @@ tmplevels<-c(
   "D.emptopopc"
 ) %>% rev
 tmplabels<-c(
-  "Chg. in Unemployment Rate",
-  "Chg. in Manufacturing Share",
-  "Chg. in Emp-to-Pop Ratio (CBP)",
-  "Chg. in Emp-to-Pop Ratio (IPUMS)"
+  "Increase in Unemployment Rate",
+  "Decline in Manufacturing Share",
+  "Decline in Emp-to-Pop Ratio (CBP)",
+  "Decline in Emp-to-Pop Ratio (IPUMS)"
 ) %>% rev
 plotdf$var<-factor(
   plotdf$var,

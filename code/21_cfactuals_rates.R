@@ -23,7 +23,13 @@ source('dirs.R')
 
 #load RData
 setwd(filesdir); dir()
+xdir<-getwd()
 load("20_cfactuals.RData")
+setwd(xdir); setwd('..')
+rootdir <- getwd()
+codedir<-file.path(rootdir,"code")
+setwd(codedir); dir()
+source('dirs.R')
 
 #load a function to get prettynames
 setwd(codedir); dir()

@@ -25,9 +25,15 @@ source('dirs.R')
 #########################################################
 #########################################################
 
-#load image
+#load image (set dirs again, in case loaded on a different computer)
 setwd(datadir); dir()
+xdir<-getwd()
 load('02_prepped.RData')
+setwd(xdir); setwd('..')
+rootdir <- getwd()
+codedir<-file.path(rootdir,"code")
+setwd(codedir); dir()
+source('dirs.R')
 
 #functions
 setwd(codedir)
@@ -62,7 +68,7 @@ get.pvals.class<-function(pvals) {
 #########################################################
 
 #extra packs
-require(ivpack)
+require(AER)
 
 #########################################################
 #########################################################
@@ -172,7 +178,7 @@ names(endogenous)[tmp]<-"preferred"
 tmpdvs<-c(
   #no need for these, 
   #these are just replication
-  #of well-established resulst
+  #of well-established results from the literature
   # "D.emptopop",
   # "D.emptopopc",
   # "D.manushare",
@@ -196,6 +202,7 @@ tmpdvs<-c(
   "D.employees_all",
   #"D.policesp",
   ###finances
+  ##total expenditures
   "D.rev",
   "D.spend",
   "D.eduspend",
@@ -204,12 +211,14 @@ tmpdvs<-c(
   "D.policespend",
   "D.jailspend",
   "D.courtspend",
-  "D.edushare",
-  "D.healthshare",
-  "D.welfshare",
-  "D.policeshare",
-  "D.jailshare",
-  "D.courtshare"
+  ##direct expenditures
+  "D.spend_d",
+  "D.eduspend_d",
+  "D.healthspend_d",
+  "D.welfspend_d",
+  "D.policespend_d",
+  "D.jailspend_d",
+  "D.courtspend_d"
 )
 
 #pick out the vera vars
@@ -507,9 +516,20 @@ runmodsdf<-rbind.fill(
 #DEPRECTATED B/C ADDED OWN DATA
 # tmp<-str_detect(runmodsdf$dv,"rev|spend|share")
 # runmodsdf$period[tmp]<-"stacked" #b/c no 2011 data
+
 #share/ratio shouldn't be logged
 tmp<-str_detect(runmodsdf$dv,"share")
 runmodsdf$logdv[tmp]<-F
+
+#add non-log analysis of spending on welfare/health
+#since these have lots of zero values..
+tmp<-str_detect(runmodsdf$dv,"welfspend|healthspend")
+newrow<-runmodsdf[tmp,]
+newrow$logdv<-F
+runmodsdf<-rbind.fill(
+  runmodsdf,
+  newrow
+)
 
 #########
 
@@ -529,13 +549,18 @@ row.names(runmodsdf)<-NULL
 
 #########
 
-#trimming?
+# #trimming?
 # tmp<-runmodsdf$prefmods==T
 # runmodsdf<-runmodsdf[tmp,]
 
 #########
 
 runmodsdf$i<-1:nrow(runmodsdf)
+
+#########
+#save out runmods
+setwd(metadir)
+fwrite(runmodsdf,'runmodsdf.csv')
 
 #########################################################
 #########################################################
@@ -548,7 +573,7 @@ tmpseq.i<-1:nrow(runmodsdf)
 fulloutput<-lapply(tmpseq.i,function(i) {
   
   #i<-which(runmodsdf$dropoutliers=="winsorize")
-  #i<-84
+  #i<-2
   
   print(
     paste(
