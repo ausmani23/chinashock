@@ -1,5 +1,5 @@
 imagefile,label,caption,loc,order,width
-fig_inclm_corrs.pdf,fig_inclm_corrs,Correlations Between Labor Market Indicators and the Incarceration Rate,main,1,5in
+fig_inclm_corrs.pdf,fig_inclm_corrs,Correlation Between Unemployment and the Incarceration Rate,main,1,5in
 fig_path.pdf,fig_path,Causal Pathways Connecting Job Loss to Incarceration,main,4,6in
 fig_incrates.pdf,fig_incrates,"Incarceration Rate per 100,000 Adults",main,2,6in
 fig_sample.pdf,fig_sample,Commuting Zones in Regression Sample,main,5,6in

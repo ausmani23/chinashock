@@ -309,7 +309,7 @@ for(j in tmpseq.j) {
   #######################################
   
   #PUT ALL TOGETHER
-  endfiller<-data.frame(label=c("","\\textit{Endogenous Variable}",""))
+  endfiller<-data.frame(label=c("","\\textit{Measure of Job Loss}",""))
   speriodsfiller<-data.frame(label=c("","\\textit{Start-of-Period Controls}",""))
   infofiller<-data.frame(label=c("","\\textit{Model Info}",""))
   
