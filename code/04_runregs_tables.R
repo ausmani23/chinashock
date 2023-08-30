@@ -321,11 +321,13 @@ for(j in tmpseq.j) {
     infofiller,
     modelinfo
   )
-  #make NA's blank
+  #make NA's blank and remove leading zeros
   regtable<-apply(regtable,2,function(x) {
     x[is.na(x)]<-""
+    x<-str_remove(x,"^0+")
     return(x)
   })
+
   #write out each of these
   setwd(outputdir)
   filename<-paste0(

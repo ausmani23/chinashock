@@ -11,6 +11,8 @@ output/
 data/
 paper/
 r&r/
+r&r, round 2/ 
+copyedits/
 
 #select code
 code/00_runall.R

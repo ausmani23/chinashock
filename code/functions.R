@@ -419,5 +419,43 @@ winsorize2<-function (x, multiple=3)
 #########################################################
 #########################################################
 
+#remove leading zero's
+#https://stackoverflow.com/questions/42578262/remove-leading-zeros-in-ggplot2-scales
+
+no_zero <- function(x) {
+  if(is.na(x)) {
+    return(x)
+  } else {
+    if(class(x)=='numeric') {
+      # y <- sprintf('%.1f',x)
+      # y[x > 0 & x < 1] <- sprintf('.%s',x[x > 0 & x < 1]*10)
+      # y[x == 0] <- '0'
+      # y[x > -1 & x < 0] <- sprintf('-.%s',x[x > -1 & x < 0]*-10)
+      #x2<-as.character(x)
+      y<-str_trim(x) %>% 
+        str_remove("^0+") %>%
+        str_replace("^-0+","-")
+    } else if(class(x)=='character') {
+      y<-str_trim(x) %>% 
+        str_remove("^0+") %>%
+        str_replace("^-0+","-")
+    }
+    if(y=='') {
+      return(as.character(x))
+    } else {
+      return(y)
+    }
+  }
+}
+no_zeros <- function(x) sapply(x,no_zero)
+no_zero(-0.2)
+no_zero(-0.15)
+no_zero("-0.2")
+no_zero("0.27")
+
+
+######################################################
+######################################################
+
 
 setwd(olddir)

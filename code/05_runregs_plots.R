@@ -121,9 +121,9 @@ finaldf$pval.shp<-factor(
 tmpshapes<-c(8,4,16,1)
 names(tmpshapes)<-levels(finaldf$pval.shp)
 shp.labels<-c(
-  bquote(alpha == 0.01),
-  bquote(alpha == 0.05),
-  bquote(alpha == 0.10)
+  bquote(alpha == .01),
+  bquote(alpha == .05),
+  bquote(alpha == .10)
 )
 
 #add fill oclors, for tileplots
@@ -151,14 +151,14 @@ brewer.pal.info
 tmpcolors<-brewer.pal(8,"RdYlGn")
 names(tmpcolors)<-levels(finaldf$pval.fill)
 fill.labels<-c(
-  expression(paste(alpha==0.01,", ",beta<0)),
-  expression(paste(alpha==0.05,", ",beta<0)),
-  expression(paste(alpha==0.10,", ",beta<0)),
+  expression(paste(alpha==.01,", ",beta<0)),
+  expression(paste(alpha==.05,", ",beta<0)),
+  expression(paste(alpha==.10,", ",beta<0)),
   expression(paste(beta<0)),
   expression(paste(beta>0)),
-  expression(paste(alpha==0.10,", ",beta>0)),
-  expression(paste(alpha==0.05,", ",beta>0)),
-  expression(paste(alpha==0.01,", ",beta>0))
+  expression(paste(alpha==.10,", ",beta>0)),
+  expression(paste(alpha==.05,", ",beta>0)),
+  expression(paste(alpha==.01,", ",beta>0))
 )
 
 #########################################################
@@ -372,6 +372,8 @@ plotdf$endogenous<-factor(
   tmplabels
 )
 
+plotdf[,c('instrumented','dv','endogenous','N','N.czs')]
+
 g.tmp<-ggplot(
   plotdf,
   aes(
@@ -386,7 +388,7 @@ g.tmp<-ggplot(
     size=2
   ) +
   geom_errorbar(
-    size=0.4,
+    linewidth=0.4,
     width=0.2
   ) +
   geom_hline(
@@ -410,11 +412,14 @@ g.tmp<-ggplot(
     ~ dv + endogenous,
     ncol=1
   ) +
-  theme_bw()
+  theme_bw() +
+  theme(
+    text = element_text(family='serif')
+  )
 g.tmp
 
 setwd(outputdir)
-tmpname<-"fig_ols2sls.png"
+tmpname<-"fig_ols2sls.pdf"
 ggsave(
   g.tmp,
   filename=tmpname,
@@ -455,7 +460,7 @@ tmpvars<-c(
   "D.courtspend",
   "D.eduspend",
   "D.welfspend",
-  "D.healthspend",
+  "D.healthspend"#,
   # #direct
   # "D.spend_d",
   # "D.policespend_d",
@@ -620,8 +625,10 @@ plotdf$stage<-factor(
   tmplabels
 )
 
+plotdf[,c('dv','N','N.czs')] %>% unique
+
 g.tmp<-ggplot(
-  plotdf[plotdf$stage%in%c('Reduced Form','Second Stage'),],
+  plotdf[plotdf$stage%in%c('Second Stage'),],
   aes(
     x=dv,
     y=mu.sd,
@@ -642,6 +649,7 @@ g.tmp<-ggplot(
     linetype='dashed',
     color='black'
   ) +
+  scale_y_continuous(labels = no_zeros) +
   scale_shape_manual(
     name="",
     values=tmpshapes,
@@ -659,20 +667,20 @@ g.tmp<-ggplot(
     scales='free',
     space='free_y'
   ) +
-  theme_bw()
-
+  theme_bw() +
+  theme(
+    text=element_text(family='serif')
+  )
+ 
 setwd(outputdir)
-tmpname<-"fig_otherdvs.png"
+tmpname<-"fig_otherdvs.pdf"
 ggsave(
   g.tmp,
   filename=tmpname,
-  width=8,
+  width=5,
   height=8
 )
 output(plotdf,tmpname,g.tmp)
-
-
-
 
 #########################################################
 #########################################################
@@ -689,6 +697,7 @@ tmp<-tmp &
   finaldf$var%in%c("D.emptopopc","otch") &
   (finaldf$stage=='secondstage' & !is.na(finaldf$stage))
 plotdf<-finaldf[tmp,]
+
 
 #get the race and institution from the name
 plotdf$race <- str_extract(
@@ -760,8 +769,11 @@ tmplabels<-c(
 extradf$institution <- factor(extradf$institution,tmplevels,tmplabels)
 
 #limit threshold
-# plotdf<-plotdf[plotdf$threshold=="<=75%",]
-# extradf<-extradf[extradf$threshold=="<=75%",]
+plotdf<-plotdf[plotdf$threshold=="<=75%",]
+extradf<-extradf[extradf$threshold=="<=75%",]
+
+Ndf<-plotdf[,c('race','threshold','institution','N','N.czs')]
+Ndf[order(Ndf$N),]
 
 g.tmp<-ggplot(
   plotdf,
@@ -800,18 +812,23 @@ g.tmp<-ggplot(
   scale_color_discrete(
     name=""
   ) +
+  scale_y_continuous(labels = no_zeros) +
   ylab("\nStandarized Estimate") +
   xlab("") +
   coord_flip() +
   facet_grid(
-    threshold ~ institution,
+    . ~ institution,
+    #threshold ~ institution,
     scales='free_y',
     space='free_y'
   ) +
-  theme_bw()
+  theme_bw() +
+  theme(
+    text = element_text(family='serif')
+  )
 
 setwd(outputdir)
-tmpname<-"fig_effectsbyrace.png"
+tmpname<-"fig_effectsbyrace.pdf"
 ggsave(
   g.tmp,
   filename=tmpname,
@@ -1190,6 +1207,9 @@ tmpdf$stage<-factor(
 #   tmplabels
 # )
 
+#sample sizes
+plotdf[,c('propername','N'),] %>% unique
+
 g.tmp<-ggplot(
   plotdf,
   aes(
@@ -1228,6 +1248,9 @@ g.tmp<-ggplot(
     labels=shp.labels,
     drop=F
   ) +
+  scale_y_continuous(
+    labels=no_zeros
+  ) +
   facet_grid(
     group ~ stage,
     scales='free',
@@ -1236,11 +1259,14 @@ g.tmp<-ggplot(
   coord_flip() +
   xlab("") + 
   ylab("\nStandardized Estimate") +
-  theme_bw()
+  theme_bw() +
+  theme(
+    text = element_text(family='serif')
+  )
 g.tmp
 
 setwd(outputdir)
-tmpname<-"fig_robustness.png"
+tmpname<-"fig_robustness.pdf"
 ggsave(
   plot=g.tmp,
   filename=tmpname,

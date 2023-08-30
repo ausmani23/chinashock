@@ -189,10 +189,13 @@ g.tmp<-ggplot(
   theme_bw() +
   theme(
     legend.position = 'bottom'
+  ) +
+  theme(
+    text = element_text(family='serif')
   )
 
 setwd(outputdir)
-tmpname<-"fig_cfactuals_rates.png"
+tmpname<-"fig_cfactuals_rates.pdf"
 ggsave(
   plot=g.tmp,
   filename=tmpname,

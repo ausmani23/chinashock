@@ -549,12 +549,12 @@ ggsave(
   width=8*2,
   height=8*2
 )
-gs.list[[tmpname]]<-list(
-  graph=g.tmp,
-  filename=tmpname,
-  width=8*2,
-  height=8*2
-)
+# gs.list[[tmpname]]<-list(
+#   graph=g.tmp,
+#   filename=tmpname,
+#   width=8*2,
+#   height=8*2
+# )
 
 #########################################################
 #########################################################
@@ -892,19 +892,20 @@ corrsdf<-by(plotdf,plotdf$var,function(df) {
     pval=tmpoutput$p.value
   )
 }) %>% rbind.fill
-corrsdf$text
 
-corrsdf$cor<-format(corrsdf$cor,digits=2)
-#hack to get 0.00
-options(scipen=99)
+corrsdf$cor<-format(corrsdf$cor,digits=2) %>% no_zeros
+# #hack to get 0.00
+# options(scipen=99)
 corrsdf$pval<-prettyNum(corrsdf$pval,digits=2) %>%
-  str_extract("[0-9]\\.[0-9]{2}")
-options(scipen=0)
+  str_extract("[0-9]\\.[0-9]{2}") %>% 
+  no_zeros
+# options(scipen=0)
 corrsdf$textdisp<-paste0(
   corrsdf$cor,
   " (pval=",
   corrsdf$pval,")"
 )
+
 
 #show just unemploiyment rate
 plotdf<-plotdf[var=='unemployment']
@@ -980,7 +981,8 @@ g.tmp<-ggplot(
     ),
     x=1990,
     y=1.75,
-    size=4
+    size=4,
+    family='serif'
   ) +
   # facet_wrap(
   #   ~ var,
@@ -992,10 +994,13 @@ g.tmp<-ggplot(
   theme(
     legend.position='bottom',
     legend.direction='horizontal'
+  ) +
+  theme(
+    text = element_text(family='serif')
   )
 
 setwd(outputdir)
-tmpname<-"fig_inclm_corrs.png"
+tmpname<-"fig_inclm_corrs.pdf"
 ggsave(
   plot=g.tmp,
   filename=tmpname,
@@ -1003,12 +1008,15 @@ ggsave(
   height=4
 )
 
-gs.list[[tmpname]]<-list(
-  graph=g.tmp,
-  filename=tmpname,
-  width=5,
-  height=4
-)
+
+
+# 
+# gs.list[[tmpname]]<-list(
+#   graph=g.tmp,
+#   filename=tmpname,
+#   width=5,
+#   height=4
+# )
 
 
 #########################################################
@@ -1176,6 +1184,8 @@ textdf$vald<-format(textdf$val,digits=1)
 textdf$vald[!str_detect(textdf$vald,"-")] <-
   paste0("+",str_replace(textdf$vald[!str_detect(textdf$vald,"-")],"\\s",""))
 
+tapply(plotdf$val,plotdf$var,length) #N. obs
+
 g.tmp<-ggplot(
   plotdf,
   aes(
@@ -1198,20 +1208,25 @@ g.tmp<-ggplot(
       y=maxy+0.025,
       label=vald
     ),
-    fontface='bold'
+    fontface='bold',
+    family='serif'
   ) +
   scale_linetype_discrete(
     name=""
   ) +
+  scale_y_continuous(labels = no_zeros) +
   facet_grid(
     periodf ~ var,
     #scales='free'
   ) +
   xlab("") +
   ylab("") +
-  theme_bw()
+  theme_bw() +
+  theme(
+    text= element_text( family = 'serif')
+  )
 
-tmpname<-"fig_densities.png"
+tmpname<-"fig_densities.pdf"
 setwd(outputdir)
 ggsave(
   plot=g.tmp,
@@ -1219,14 +1234,6 @@ ggsave(
   width=12,
   height=6
 )
-gs.list[[tmpname]]<-list(
-  graph=g.tmp,
-  filename=tmpname,
-  width=12,
-  height=6
-)
-output(sumdf,tmpname)
-
 
 g.tmp<-ggplot(
   cordf,
@@ -1360,14 +1367,17 @@ g.tmp <- ggplot(
   coord_flip() +
   ylab("") +
   xlab("") +
-  theme_bw()
+  theme_bw() +
+  theme(
+    text=element_text(family='serif')
+  )
 
-tmpname<-"fig_exceptionalism.png"
+tmpname<-"fig_exceptionalism.pdf"
 setwd(outputdir)
 ggsave(
   plot=g.tmp,
   filename=tmpname,
-  width=10,
+  width=8,
   height=5
 )
 gs.list[[tmpname]]<-list(
