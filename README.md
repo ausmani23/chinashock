@@ -28,6 +28,6 @@ This repository contains replication materials for "Labor Markets and Incarcerat
 To run 00_replicate.R, which replicates the main results, the files in this repository are sufficient. But if you would like to replicate anything else, follow these steps: 
 
 1. Create a 'files' folder in the main directory
-2. Download '02_prepped.RData' into that folder (via [this link](https://www.dropbox.com/s/gpjx11jb2eyg7wz/02_prepped.RData?dl=0))
+2. Download '02_prepped.RData' into that folder (via [this link](https://www.dropbox.com/scl/fi/kam3xwbylos775eaozhpw/02_prepped.RData?rlkey=yq5mmb12uxgdaurbc5gdwkinc&dl=0))
 3. Create an 'output' folder in the main directory
 4. Run all numbered .R files, in order
